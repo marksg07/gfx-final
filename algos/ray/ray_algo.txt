@@ -1,0 +1,84 @@
+ ____             
+|  _ \ __ _ _   _ 
+| |_) / _` | | | |
+|  _ < (_| | |_| |
+|_| \_\__,_|\__, |
+            |___/ 
+===============================================================================
+1.1: We need to add a specular component to the lighting model.
+
+1.2: We need the rays to reflect off of the objects they hit. We take intersection
+points, and we send new 2 kinds of new rays.
+	2. We use specular reflection to create new rays to other objects
+	(specular inter-object reflection)
+	3. We send refractive rays through transparent objects (we don't have to
+	do this if the object is totally opaque).
+
+2:
+	From the textbook section 11.1
+	Assuming n is normalized:
+		r = -v - 2(-v * n)n
+		r = -v + 2(v * n)n
+
+3:
+	The further away the light is from the object the less intense its
+	contribution will be. Usually this is a non-linear function, so the
+	intensity of light rapidly decreases.
+
+4:
+	1. When there is another opaque object in-front thus blocking
+	the light source.
+
+	2. The object could be self-occluding blocking light.
+
+	Extra Credit:
+	3. The object's material could be totally transparent
+
+	4. The object's material could have 0 for all lighting coefficients
+	(an infinitely dark object). 
+
+
+5:
+	j * w: this is the length of the full mapping.
+	u * j * w: is how far into the full mapping we are.
+	u * j * w % w: will map us from the repeating texture map coordinates
+	in to the single texture map we have.
+
+	(s, t) = ((u * j * w) % w, (v * k * h) % h) 	
+
+6:
+	a = ambient
+	d = diffuse
+	s = specular
+	b = blend
+	t = texture color
+
+	I = a + ((b * t) + (1 - b)*d) + s
+
+
+7: The specular exponent is a measure of how shiny the object is. The higher the
+constant the shinier the object is, and the smaller and more intense the specular
+highlight will be. In contrast if the specular expontent constant is small,
+the specular highlight will be larger.
+
+8.
+	Path tracers bounce rays off objects probabilistically, rather than
+	simply bouncing one ray from the object deterministically according
+	to the reflection equation like in ray tracing. This means that Path
+	tracing gives a better approximation of lighting.
+
+	Path tracing advantages:
+		1. Path tracers have more realistic lighting effects, including
+		better shadows and ambient occlusion.
+	Path tracing disadvantages:
+		1. Noise. Lots and lots of noise. Unless the tracer has a huge number of
+		rays, the image will be full of noise, especially in bright scenes.
+		2. It's much slower. Since you need to probabilistically simulate a lot of
+		rays if you want the image to look good.
+
+	Other global illumination methods:
+		1. Radiosity
+		2. Photon mapping
+		3. Path tracing
+		4. Spherical Harmonics
+		5. Metropolis Light Transport

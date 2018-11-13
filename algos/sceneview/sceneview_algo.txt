@@ -1,0 +1,43 @@
+ ____                            _               
+/ ___|  ___ ___ _ __   _____   _(_) _____      __
+\___ \ / __/ _ \ '_ \ / _ \ \ / / |/ _ \ \ /\ / /
+ ___) | (_|  __/ | | |  __/\ V /| |  __/\ V  V / 
+|____/ \___\___|_| |_|\___| \_/ |_|\___| \_/\_/  
+===============================================================================
+
+1: C' = R * T * S * C
+
+	This would scale the object, then translate, then rotate it. This will cause the rotation
+	be distorted because the object will not be at the origin, as it will have been translated
+	away first.
+
+	We should instead use the formula:
+
+	C' = T * R * S * C
+
+	This will scale the object, then rotate, then translate (which will not (generally)
+	lead to distortion). 
+
+2: 
+	M1 * M2
+
+3:
+	a. Traversing the scenegraph for each object is inefficient because for every object
+	in the scene, you must traverse down the scenegraph, find the primatives, apply the necessary
+	transformations, and then you'd have to iterate up the tree to find the transformations for the 
+	object itself. Since the scene is static, we can pre-compute all the transformations we will
+	need to apply to a given object, by multiplying all the transformation matrices in the correct order.
+
+	b. I would turn the scenegraph into a list of primatives to be rendered to the screen.
+	Using this method, I would only have to parse the scenegraph once and afterward
+	I'd have a list which would contain all the required information to render the object. I'd have
+	composed all the required transformation matrices for a given primative, so I could just directly apply
+    the transformation matrix to the vertices rather than worrying about finding the transformations
+    further up in the tree. Applying a single matrix is much, much faster than parsing up the tree and
+    applying matrix after matrix.
+
+	c. At each element in the list I'd store the transformation matrix required to transform the vertices
+	of the object from object space to world space. I'd also store all the vertices of the object, as well
+	as any other necessary properties like: the diffuse, ambient, specular, reflect, and transparent color
+    texturemap information, if the object was transparent, how shiny the object was, and anything else
+    required to properly render the object (the types of these values are defined in the scenefile.pdf).

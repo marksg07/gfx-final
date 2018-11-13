@@ -1,0 +1,101 @@
+1.1:
+	[1, 0, 0]
+	[0, cos(theta), -sin(theta)]
+	[0, sin(theta), cos(theta)]
+
+2.1:
+	We can translate so that h is at the origin, rotate with the equation 
+	above, and then translate h from the origin back to its original 
+	position.
+
+	p' = Mt^-1 * M1^-1 * M2^-1 * M3 * M2 * M1 * Mt * p,
+	where Mt is a translation by -h (so h goes to the origin), and M1, M2,
+	 and M3 are the same as above, and any matrix M^-1 is the inverse
+	 transformation of M.
+
+3.1:
+
+	1. M1: Unhinging the view volume:
+		a. This sends all points on the z=-1 clipping plane to themselves.
+		b. This sense all points on the z=c clipping plain to the z=0 plane.
+
+		Values:
+		[1, 0, 0, 0]
+		[0, 1, 0, 0]
+		[0, 0, 1/(1+(-near/far)), -(-near/far)/(1+(-near/far))]
+		[0, 0, -1, 0]
+
+
+
+	2. M2: Scaling, scales the view volume so that the clipping plane is at z=-1 and the corners are at
+		(+/-1, +/-1, -1). 
+
+		Values:
+		[1 / (far * tan(theta_w / 2)), 0, 0, 0]
+		[0, 1 / (far * tan(theta_h / 2)), 0, 0]
+		[0, 0, 0, 1 / far]
+		[0, 0, 0, 1]
+
+
+	3. M3: Rotation, "takes the look and up vectors and orients the camera to look down the –z axis"
+
+		Values:
+
+		Where:
+			w = -look / ||look||
+			v' = (up - (up * w)*w)
+			v = v' / ||v'||
+			u = v' x w
+
+		[u_x, u_y, y_z, 0]
+		[v_x, v_y, v_z, 0]
+		[w_x, w_y, w_z, 0]
+		[0, 0, 0, 1]
+
+	4. M4: Translation, takes the camera's position and moves it to the world origin.
+
+		Values:
+		[1, 0, 0, x]
+		[0, 1, 0, y]
+		[0, 0, 1, z]
+		[0, 0, 0, 1]
+
+3.2:
+	
+	1. Left one unit:
+		Since to move left we must move along the u axis. Since we are moving
+		left we need to subtract one from u in camera space, which is -u
+		in world space.
+
+		E' = E - u
+
+	2. Down one unit:
+		To transform the camera down one unit in camera space, we 
+		want to subtract one from the v component.
+
+		E' = E - v
+
+	3. Forward one unit:
+		Since w is the negative of the look vector, we need to add -w to
+		E to transform it forward one unit (in camera space).
+
+		E' = E + (-w) 
+
+3.3:
+	
+	1. Roll is a rotation around the look vector. Since -w = look, and we
+	need to rotate clockwise.
+
+		To get u, v, and w we need to rotate, u0, v0, and w0 by -theta around
+	-w using the abitrary axis rotation.
+
+
+	2. Pitch is a counterclockwise rotation around u.
+
+		To get u, v, and w we need to rotate, u0, v0, and w0 by theta around
+	u using the abitrary axis rotation.
+
+
+	3. Yaw to face right is a clockwise rotation around v.
+		To get u, v, and w we need to rotate, u0, v0, and w0 by -theta around
+	v using the abitrary axis rotation.

@@ -1,0 +1,41 @@
+ ____                 _     
+| __ ) _ __ _   _ ___| |__  
+|  _ \| '__| | | / __| '_ \ 
+| |_) | |  | |_| \__ \ | | |
+|____/|_|   \__,_|___/_| |_|
+===============================================================================
+
+1:
+	1.1:
+		F = (M * a * B) + (1 - (M * a)) * C
+
+
+2:
+	2.1:
+		/* The bounds should be:
+		*	[y - R, y + R] (inclusive)
+		*	[x - R, x + R] (inclusive)
+		*/
+		int rowstart = MAX(0, y - R);
+		int rowend = MIN(w, y + R + 1);
+		int colstart = MAX(0, x - R);
+		int colend = MIN(h, x + R + 1);
+
+3:
+	3.1:
+		index = (row * width) + column
+		index = (22 * 512) + 242 = 11506
+	
+	3.2:
+		row = index / width;
+		col = index % width;
+
+		row = 12345 / 512 = 24
+		col = 12345 % 512 = 57
+
+	3.3:
+		Pixels are 4 bytes (one for each of the 3 colors: R, G, B and the alpha channel), so 4.
+	
+	3.4:
+		There's exactly one row in-between two vertically adjactent pixels when memory is considered a 1D array.
+		row * sizeof(pixel) = 512 * 4 = 2048

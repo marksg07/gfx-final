@@ -1,0 +1,7 @@
+#ifndef CS123ILLUMINATEDATA_H
+#define CS123ILLUMINATEDATA_H
+
+#include "CS123SceneData.h"
+
+
+#endif // CS123ILLUMINATEDATA_H

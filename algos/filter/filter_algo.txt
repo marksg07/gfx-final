@@ -1,0 +1,112 @@
+ _____ _ _ _            
+|  ___(_) | |_ ___ _ __ 
+| |_  | | | __/ _ \ '__|
+|  _| | | | ||  __/ |   
+|_|   |_|_|\__\___|_|   
+                        
+=====================================================================================================
+
+Note: All these images are really large. You might have to zoom out, sorry about that.
+
+1:
+	1.1: By increasing the box filter the frequency of the sinc function increases. The larger the
+	box the closer the function will be to 0 at all point, except at 0 which is 1. This means that
+	the larger the box the closer the function will be to the dirac-delta function except that it 
+	approaches 1 at 0 not infinity. 
+	See `sinc_box.png`
+
+
+	1.2: The triangle's frequency domain will closely approximate the sinc function in the frequency
+	domain. Since the triangle doesn't extend infinitely and is usable in the spatial domain it is 
+	much easier to use than sinc.
+
+	1.3: Pixels are now point samples not "squares" or "dots". Unlike our old notion of pixels,
+	these pixels have no area, as they are just points.
+
+2:
+	2.1: Since our box filter is always 1 and our spatial domain is always 1, so the product of the
+	filter and function will always be 1 if they overlap, 0 otherwise. Therefore the integration
+	will be the area of the rectangle of overlap between the function and filter. Since the
+	rectangle is only one high, the value of the function convolved with the filter is just
+	the width of the rectangle overlap.
+
+		a. 0 (no overlap)
+		b. .25  (overlap from 1.75 to 2)
+		c. .75 (overlap from 1.25 to 2)
+		d. 1 (overlap from .75 to 1.75)
+
+
+	2.2: See `convolved_func.jpg`
+
+	2.3: Convolution in the spatial domain is multiplication in the frequency domain so the dual of
+		f(x)*g(x), is: F(x)G(x)
+
+3:
+	3.1: The Nyquist limit is: n / 2, so we can represent frequencies up to (but not including) n / 2.
+
+	3.2: Since we are looking at the frequency domain, we just have to cut of all frequencies greater
+	than the nyquist limit. Since the Nyquist limit is n / 2, 8 / 2 = 4, we must cut off all 
+	frequencies greater than or equal to 4 (and negative frequencies less than or equal to-4).
+	See `mandrill_filtered.png`
+
+4: 
+	4.1: The blur filter is a gaussian filter, which is a low-pass filter, so it will remove higher 
+	frequencies from the frequency domain. This is because the gaussian filter is its own dual. 
+	Since convolution inthe spatial domain is multiplication in frequency domain, and the gaussian 
+	function is centeredat 0 and trails off toward the tails. This therefore gives higher weights to 
+	lower frequencies, thus eliminating the higher frequencies from the frequency domain.
+
+	4.2: Since the idea filter is a gaussian filter in the frequency domain, and since it's
+	its own dual it is also the idea filter in the spatial domain.
+
+	4.3: Σ(g(i)*pix[x + i])/Σ(g(i)), from [-2, 2]; where g(i) is the gaussian function, centered at 
+	0, with a standard deviation of 1. This would cause the total intensity to be one, which would prevent
+    the image from darkening.
+
+ 	4.4: Σ(g(i)*pix[x + i])/Σ(g(i)), from [-2, 2]; where g(i) is the gaussian function, centered at 
+	0, with a standard deviation of 1 when x is inside the image and 0 otherwise. You could also
+    set out of bounds pixels to 0 and then divide by the sum of g(i) where x + i was an in bounds pixel
+    from [-2, 2].
+
+
+5:
+ 	5.1: We will use a support width of 2 when scaling up. Andy proved this in class by vigorous assertion.
+ 	https://piazza.com/class/jlcpo2r4zrv7?cid=561
+
+ 	5.2: If we are scaling down, we want to sample at least part of every pixel. So if the original
+ 	image in M pixels, and we are scaling down to N pixels, in order to sample at least part of every
+ 	pixel, we want to use a filter support width of 1 / (N / M). Since N / M is the scale factor, the
+ 	support width should be 1 / n.
+ 	
+ 	5.3 / 5.4: back_map.jpg (also note that the correct filter covers the whole image,
+ 				whereas due to the offset the naive filter cuts off pixels on the right side).
+
+ 	5.5:
+
+ 		a:
+ 			(0, 0) : (-1 / 6, 0) # Already given
+ 			(1, 0) : (1 / 2, 0)
+			(2, 0) : (7 / 6, 0)
+
+ 			(0, 1) : (-1 / 6, 1)
+ 			(1, 1) : (1 / 2, 1)
+			(2, 1) : (7 / 6, 1)
+
+		b:
+ 			(0, 0) : (0, -1 / 6) # Already given
+ 			(1, 0) : (1, -1 / 6)
+ 			(2, 0) : (2, -1 / 6)
+
+ 			(0, 1) : (0, 1 / 2)
+ 			(1, 1) : (1, 1 / 2)
+ 			(2, 1) : (2, 1 / 2)
+
+ 			(0, 2) : (0, 7 / 6)
+ 			(1, 2) : (1, 7 / 6)
+ 			(2, 2) : (2, 7 / 6)
+
+ 	5.6:
+ 		i. b
+ 		ii. d
+ 		iii. a 
+ 		iv. c
