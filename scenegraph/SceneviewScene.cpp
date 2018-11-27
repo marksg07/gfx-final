@@ -192,7 +192,7 @@ void SceneviewScene::renderGeometry() {
         m_phongShader->applyMaterial(r.primitive.material);
 
 
-        if (r.primitive.material.textureMap.isUsed)
+        if (r.primitive.material.textureMap.isUsed && 0)
         {
             Texture2D& tex = *r.tex.get();
 

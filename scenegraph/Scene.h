@@ -45,6 +45,7 @@ protected:
     CS123SceneGlobalData m_globalData;
 
     CS123SceneCameraData m_cameraData;
+
 };
 
 #endif // SCENE_H

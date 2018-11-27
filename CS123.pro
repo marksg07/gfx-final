@@ -85,9 +85,9 @@ SOURCES += \
     filter/FilterRotate.cpp \
     filter/FilterSharpen.cpp \
     filter/FilterUnsharp.cpp \
-    scenegraph/Ray.cpp \
     scenegraph/IlluminateData.cpp \
-    scenegraph/IntersectionManager.cpp
+    scenegraph/IntersectionManager.cpp \
+    scenegraph/KDTree.cpp
 
 
 HEADERS += \
@@ -161,7 +161,9 @@ HEADERS += \
     filter/FilterUnsharp.h \
     scenegraph/Ray.h \
     scenegraph/IlluminateData.h \
-    scenegraph/IntersectionManager.h
+    scenegraph/IntersectionManager.h \
+    scenegraph/ThreadPool.h \
+    scenegraph/KDTree.h
 
 
 FORMS += ui/mainwindow.ui
@@ -193,7 +195,8 @@ OTHER_FILES += shaders/shader.frag \
     Filter_README.txt \
     shaders/texture.frag \
     Sceneview_README.txt \
-    Intersect_README.txt
+    Intersect_README.txt \
+    Ray_README.txt
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2

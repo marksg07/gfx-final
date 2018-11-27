@@ -67,6 +67,39 @@ float IntersectionManager::findLinearIntersection(glm::vec4 p, glm::vec4 d, floa
 }
 
 
+float IntersectionManager::intersectsCube(glm::vec4 p, glm::vec4 d)
+{
+    // Find intersections with every face of the cube
+    std::vector<float> ts = {
+        findLinearIntersection(p, d, .5, Axis::X),
+        findLinearIntersection(p, d, -.5, Axis::X),
+        findLinearIntersection(p, d, .5, Axis::Y),
+        findLinearIntersection(p, d, -.5, Axis::Y),
+        findLinearIntersection(p, d, .5, Axis::Z),
+        findLinearIntersection(p, d, -.5, Axis::Z)
+    };
+
+    // Find the smallest valid t.
+    glm::vec4 i = NO_INTERSECTION;
+    for(float t : ts)
+    {
+        if (t < 0 || t > i.w || t == INFINITY)
+        {
+            continue;
+        }
+
+        glm::vec4 v = r(p, d, t);
+
+        if (fabs(v.x) <= .5 + EPSILON && fabs(v.y) <= .5 + EPSILON && fabs(v.z) <= .5 + EPSILON)
+        {
+            i = v;
+        }
+    }
+
+    return i.w;
+}
+
+
 IlluminateData IntersectionManager::intersectCube(glm::vec4 p, glm::vec4 d, CS123Renderable* renderable)
 {
     // Find intersections with every face of the cube
@@ -80,10 +113,10 @@ IlluminateData IntersectionManager::intersectCube(glm::vec4 p, glm::vec4 d, CS12
     };
 
     // Find the smallest valid t.
-    glm::vec4 i = glm::vec4(-1, -1, -1, INFINITY);
+    glm::vec4 i = NO_INTERSECTION;
     for(float t : ts)
     {
-        if (t < 0 || t > i.w)
+        if (t < 0 || t > i.w || t == INFINITY)
         {
             continue;
         }
@@ -161,7 +194,7 @@ IlluminateData IntersectionManager::intersectCone(glm::vec4 p, glm::vec4 d, CS12
     glm::vec2 sol = quadraticSolver(a, b, c);
 
 
-    glm::vec4 min_i = glm::vec4(0, 0, 0, INFINITY);
+    glm::vec4 min_i = NO_INTERSECTION;
 
     if (sol.x > 0)
     {

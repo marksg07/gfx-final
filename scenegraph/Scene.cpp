@@ -5,6 +5,8 @@
 #include "glm/gtx/string_cast.hpp"
 #include "glm/gtx/transform.hpp"
 
+std::map<std::string, QImage> CS123Renderable::m_textures;
+std::map<std::string, QImage> CS123Renderable::m_texturesGLFormat;
 
 Scene::Scene()
 {

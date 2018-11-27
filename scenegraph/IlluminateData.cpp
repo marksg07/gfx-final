@@ -18,3 +18,8 @@ glm::vec4 IlluminateData::normal()
     // Find the normal vector in world space
     return glm::normalize(glm::vec4(m * m_renderable->normal(m_inter).xyz(), 0.0));
 }
+
+glm::vec4 IlluminateData::texture()
+{
+    return m_renderable->texture(m_inter);
+}
