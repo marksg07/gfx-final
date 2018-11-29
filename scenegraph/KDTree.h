@@ -22,7 +22,7 @@ public:
         z.y = std::max(box.max().z, z.y);
     }
 
-    KDTree(std::vector<CS123Renderable*> renderables, size_t depth = 0)
+    KDTree(std::vector<CS123Renderable*> renderables, size_t prevrep, size_t prevlen, size_t depth)
         : m_depth(depth)
     {
 
@@ -40,20 +40,20 @@ public:
 
         m_aabb = AABB(glm::vec3(x.x, y.x, z.x), glm::vec3(x.y, y.y, z.y));
 
-        doSplit(renderables);
+        doSplit(renderables, prevrep, prevlen);
     }
 
-    KDTree(AABB aabb, std::vector<CS123Renderable*> renderables, size_t depth)
+    KDTree(AABB aabb, std::vector<CS123Renderable*> renderables, size_t prevrep, size_t prevlen, size_t depth)
         : m_aabb(aabb), m_depth(depth)
     {
 
         m_left = nullptr;
         m_right = nullptr;
 
-        doSplit(renderables);
+        doSplit(renderables, prevrep, prevlen);
     }
 
-    void doSplit(std::vector<CS123Renderable*> renderables);
+    void doSplit(std::vector<CS123Renderable*> renderables, size_t prevrep, size_t prevlen);
 
     bool isLeaf()
     {
@@ -115,17 +115,17 @@ public:
            return getValByAxis(a->aabb().min(), axis) < getValByAxis(b->aabb().min(), axis);
         });
 
-        std::vector<float> planes;
+        std::vector<glm::vec2> planes;
         planes.reserve(renderables.size() * 2);
         for(auto r : renderables)
         {
-            planes.push_back(getValByAxis(r->aabb().min(), axis));
-            planes.push_back(getValByAxis(r->aabb().max(), axis));
+            planes.push_back(glm::vec2(getValByAxis(r->aabb().min(), axis), 0));
+            planes.push_back(glm::vec2(getValByAxis(r->aabb().max(), axis), 1));
         }
 
-        std::sort(planes.begin(), planes.end(), [axis](float a, float b)
+        std::sort(planes.begin(), planes.end(), [axis](glm::vec2 a, glm::vec2 b)
         {
-           return a < b;
+           return a.x < b.x;
         });
 
         float min_split_cost = INFINITY;
@@ -133,70 +133,41 @@ public:
 
         float sa = aabb.sa();
 
+
+        size_t left = 0;
+        size_t right = renderables.size();
         for(size_t i = 0; i < planes.size(); i++)
         {
-            float p = planes[i];
+            glm::vec2 p = planes[i];
 
             glm::vec3 min_l_plane = aabb.min();
-            glm::vec3 max_l_plane = setValByAxis(aabb.max(), axis, p);
+            glm::vec3 max_l_plane = setValByAxis(aabb.max(), axis, p.x);
 
-            glm::vec3 min_r_plane = setValByAxis(aabb.min(), axis, p);
+            glm::vec3 min_r_plane = setValByAxis(aabb.min(), axis, p.x);
             glm::vec3 max_r_plane = aabb.max();
 
             float left_sa = AABB(min_l_plane, max_l_plane).sa() / sa;
             float right_sa = AABB(min_r_plane, max_r_plane).sa() / sa;
 
-            size_t left = 0;
-            for(; left < renderables.size(); left++)
-            {
-                if (p < getValByAxis(renderables[left]->aabb().min(), axis))
-                {
-                    break;
-                }
-            }
 
             //std::cout << left << std::endl;
-            float cost = left_sa * left + (right_sa * (renderables.size() - left));
+            float cost = left_sa * left + (right_sa * right);
             if (cost < min_split_cost)
             {
                 min_split_cost = cost;
                 min_split_idx = i;
+            }
+
+            if (p.y == 0)
+            {
+                left++;
+            } else {
+                right--;
             }
         }
 
-        /*for(size_t i = 0; i < renderables.size() - 1; i++)
-        {
-            CS123Renderable* r = renderables[i];
-
-            glm::vec3 min_l_plane = aabb.min();
-            glm::vec3 max_l_plane = setValByAxis(aabb.max(), axis, getValByAxis(r->aabb().min(), axis));
-
-            glm::vec3 min_r_plane = setValByAxis(aabb.min(), axis, getValByAxis(r->aabb().min(), axis));
-
-            assert(getValByAxis(min_r_plane, axis) == getValByAxis(max_l_plane, axis));
-
-            glm::vec3 max_r_plane = aabb.max();
-
-            float left_sa = AABB(min_l_plane, max_l_plane).sa() / sa;
-            float right_sa = AABB(min_r_plane, max_r_plane).sa() / sa;
-
-            float cost = left_sa * i + (right_sa * (renderables.size() - i));
-            if (cost < min_split_cost)
-            {
-                min_split_cost = cost;
-                min_split_idx = i;
-            }
-        }*/
-
-        return planes[min_split_idx];
-
-        //return (getValByAxis(renderables[renderables.size() / 2]->aabb().min(), axis) + getValByAxis(renderables[renderables.size() / 2]->aabb().max(), axis)) / 2.0;
-
-
-        /*float max = getValByAxis(aabb.max(), axis);
-        float min = getValByAxis(aabb.min(), axis);
-
-        return min + ((max - min) / 2.0);*/
+        std::cout << "split idx: " << min_split_idx << std::endl;
+        return planes[min_split_idx].x;
     }
 
     static inline float getValByAxis(glm::vec3 v, Axis a)

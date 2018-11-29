@@ -311,5 +311,5 @@ void RayScene::render(Canvas2D* canvas, int w, int h)
         }
     }
 
-
+    canvas->update();
 }

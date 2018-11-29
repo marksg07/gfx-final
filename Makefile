@@ -587,21 +587,21 @@ compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: resources.qrc \
-		shaders/wireframe/wireframe.vert \
-		shaders/normals/normals.vert \
-		shaders/normals/normalsArrow.vert \
-		shaders/fullscreenquad/fullscreenquad.frag \
-		shaders/shader.vert \
+		shaders/normals/normals.gsh \
 		shaders/texture.frag \
 		shaders/normals/normalsArrow.gsh \
-		shaders/test/shader.frag \
-		shaders/wireframe/wireframe.frag \
-		shaders/fullscreenquad/fullscreenquad.vert \
 		shaders/normals/normals.frag \
-		shaders/normals/normalsArrow.frag \
+		shaders/normals/normalsArrow.vert \
+		shaders/fullscreenquad/fullscreenquad.frag \
+		shaders/test/shader.vert \
 		shaders/shader.frag \
-		shaders/normals/normals.gsh \
-		shaders/test/shader.vert
+		shaders/wireframe/wireframe.frag \
+		shaders/normals/normals.vert \
+		shaders/fullscreenquad/fullscreenquad.vert \
+		shaders/normals/normalsArrow.frag \
+		shaders/shader.vert \
+		shaders/wireframe/wireframe.vert \
+		shaders/test/shader.frag
 	/contrib/projects/qt5.2.0/5.2.0/gcc_64/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_Canvas2D.cpp moc_SupportCanvas2D.cpp moc_SupportCanvas3D.cpp moc_mainwindow.cpp moc_Databinding.cpp moc_Snake.cpp
@@ -3501,10 +3501,7 @@ RayScene.o: scenegraph/RayScene.cpp scenegraph/RayScene.h \
 		scenegraph/KDTree.h \
 		ui/Settings.h \
 		../../../../../sys/shared/psfu/contrib/projects/qt5.2.0/5.2.0/gcc_64/include/QtCore/QObject \
-		scenegraph/ThreadPool.h \
-		../../../../../sys/shared/psfu/contrib/projects/qt5.2.0/5.2.0/gcc_64/include/QtCore/QCoreApplication \
-		../../../../../sys/shared/psfu/contrib/projects/qt5.2.0/5.2.0/gcc_64/include/QtCore/qcoreapplication.h \
-		../../../../../sys/shared/psfu/contrib/projects/qt5.2.0/5.2.0/gcc_64/include/QtCore/qeventloop.h
+		scenegraph/ThreadPool.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o RayScene.o scenegraph/RayScene.cpp
 
 Canvas2D.o: ui/Canvas2D.cpp ui/Canvas2D.h \

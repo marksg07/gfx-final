@@ -26,7 +26,7 @@ public:
 
         if (settings.useKDTree)
         {
-            m_kdtree = std::make_unique<KDTree>(m_renderable_ptrs);
+            m_kdtree = std::make_unique<KDTree>(m_renderable_ptrs, 0, m_renderable_ptrs.size(), 0);
         }
     }
 
@@ -39,6 +39,18 @@ public:
     static float inline square(float x)
     {
         return x * x;
+    }
+
+    static float findLinearIntersection(glm::vec4 p, glm::vec4 d, float val, Axis a)
+    {
+        if (a == Axis::X)
+        {
+            return (val - p.x) / d.x;
+        } else if (a == Axis::Y)
+        {
+            return (val - p.y) / d.y;
+        }
+        return (val - p.z) / d.z;
     }
 
     static inline glm::vec2 quadraticSolver(float a, float b, float c)
@@ -66,8 +78,6 @@ public:
     static glm::vec4 intersectCap(glm::vec4 p, glm::vec4 d, float y, float rad, CS123Renderable* renderable);
 
     static glm::vec4 intersectCylinderBody(glm::vec4 p, glm::vec4 d, float radius, float max_y, CS123Renderable* renderable);
-
-    static float findLinearIntersection(glm::vec4 p, glm::vec4 d, float val, Axis a);
 
     static IlluminateData appendValidIntersections(glm::vec4 p, glm::vec4 d, std::vector<float>& ts, CS123Renderable* renderable, std::function<bool(glm::vec4)> validator);
 

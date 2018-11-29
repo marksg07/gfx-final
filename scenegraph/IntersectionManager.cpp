@@ -1,4 +1,5 @@
 #include "IntersectionManager.h"
+#include <array>
 
 glm::vec4 IntersectionManager::intersectCap(glm::vec4 p, glm::vec4 d, float y, float rad, CS123Renderable* renderable)
 {
@@ -54,23 +55,10 @@ glm::vec4 IntersectionManager::intersectCylinderBody(glm::vec4 p, glm::vec4 d, f
 }
 
 
-float IntersectionManager::findLinearIntersection(glm::vec4 p, glm::vec4 d, float val, Axis a)
-{
-    if (a == Axis::X)
-    {
-        return (val - p.x) / d.x;
-    } else if (a == Axis::Y)
-    {
-        return (val - p.y) / d.y;
-    }
-    return (val - p.z) / d.z;
-}
-
-
 float IntersectionManager::intersectsCube(glm::vec4 p, glm::vec4 d)
 {
     // Find intersections with every face of the cube
-    std::vector<float> ts = {
+    std::array<float, 6> ts = {
         findLinearIntersection(p, d, .5, Axis::X),
         findLinearIntersection(p, d, -.5, Axis::X),
         findLinearIntersection(p, d, .5, Axis::Y),

@@ -2,10 +2,10 @@
 #include "IntersectionManager.h"
 #include <glm/gtx/string_cast.hpp>
 
-void KDTree::doSplit(std::vector<CS123Renderable *> renderables)
+void KDTree::doSplit(std::vector<CS123Renderable *> renderables, size_t prevrep, size_t prevlen)
 {
     std::cout << renderables.size() << std::endl;
-    if (renderables.size() <= 2 || m_depth >= MAX_KD_DEPTH)
+    if (renderables.size() <= 4 || m_depth >= MAX_KD_DEPTH)
     {
         m_contained = renderables;
         return;
@@ -48,7 +48,6 @@ void KDTree::doSplit(std::vector<CS123Renderable *> renderables)
             added = true;
             left.push_back(renderable);
         }
-
         if (inAABB(renderable, raabb, axis))
         {
             added = true;
@@ -60,19 +59,19 @@ void KDTree::doSplit(std::vector<CS123Renderable *> renderables)
 
     std::cout << "prims: " << num_renderables << ", left: " << left.size() << ", right: " << right.size() << std::endl;
 
-
-    if (left.size() == 0 || (m_depth >= 3 && right.size() == renderables.size()))
+// || (m_depth >= 4 && left.size() == renderables.size())
+    if ((prevrep == 3 && right.size() == prevlen))
     {
         m_contained = right;
         return;
-    } else if (right.size() == 0 || (m_depth >= 3 && left.size() == renderables.size()))
+    } else if ((prevrep == 3 && left.size() == prevlen))
     {
         m_contained = left;
         return;
     } else {
         assert(!isLeaf());
-        m_left = std::make_unique<KDTree>(left, m_depth + 1);
-        m_right = std::make_unique<KDTree>(right, m_depth + 1);
+        m_left = std::make_unique<KDTree>(left, left.size() == renderables.size() ? prevrep + 1 : 0, renderables.size(), m_depth + 1);
+        m_right = std::make_unique<KDTree>(right, right.size() == renderables.size() ? prevrep + 1 : 0, renderables.size(), m_depth + 1);
     }
 
 }
@@ -91,6 +90,7 @@ void KDTree::getIntersections(glm::vec4 p, glm::vec4 d, std::vector<IlluminateDa
     if (isLeaf())
     {
         size_t len = m_contained.size();
+
         for(size_t i = 0; i < len; i++)
         {
             IlluminateData ill = IntersectionManager::intersect(p, d, m_contained[i]);

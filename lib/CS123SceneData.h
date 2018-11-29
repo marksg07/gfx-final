@@ -26,7 +26,7 @@
 #include <QRgb>
 #include <glm/gtx/string_cast.hpp>
 
-const float EPSILON = 1e-3;
+const float EPSILON = 5e-4;
 
 class CS123Renderable;
 class CS123SceneMaterial;
