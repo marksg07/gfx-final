@@ -161,8 +161,12 @@ void SceneviewScene::renderGeometry() {
         auto onode = tetmesh.getONode();
         m_phongShader->setUniform("m", onode.trans);
         m_phongShader->applyMaterial(onode.primitive.material);
-        if(m_running)
-            tetmesh.update(settings.femTimeStep);
+        if(m_running) {
+            float timePerStep = settings.femTimeStep / settings.femStepsPerFrame;
+            for(int i = 0; i < settings.femStepsPerFrame; i++) {
+                tetmesh.update(timePerStep);
+            }
+        }
         tetmesh.draw();
     }
 }

@@ -80,6 +80,7 @@ void Settings::loadSettingsOrDefaults() {
     // FEM
     
     femTimeStep = s.value("femTimeStep", 0.1).toFloat();
+    femStepsPerFrame = s.value("femStepsPerFrame", 1).toInt();
     femIncompressibility = s.value("femIncompressibility", 1.0).toFloat();
     femRigidity = s.value("femRigidity", 1.0).toFloat();
     femBulkViscosity = s.value("femBulkViscosity", 1.0).toFloat();
@@ -151,6 +152,7 @@ void Settings::saveSettings() {
     s.setValue("bumpDepth", bumpDepth);
     
     s.setValue("femTimeStep", femTimeStep);
+    s.setValue("femStepsPerFrame", femStepsPerFrame);
     s.setValue("femIncompressibility", femIncompressibility);
     s.setValue("femRigidity", femRigidity);
     s.setValue("femBulkViscosity", femBulkViscosity);

@@ -148,7 +148,7 @@ int getFirstIntFromVTN(const std::string& vtn) {
     }
 }
 
-tetgenio convertObjFile(std::string objfilename) {
+void convertObjFile(std::string objfilename, tetgenio *out) {
     std::ifstream infile(objfilename);
     std::string line;
     std::vector<REAL> vertCoords;
@@ -223,13 +223,77 @@ tetgenio convertObjFile(std::string objfilename) {
     ofile << std::endl;
     // number holes (0)
     ofile << 0 << std::endl;
-    tetgenio tgio;
     printf("About to tgio.load_poly...\n");
     fflush(stdout);
-    tgio.load_poly("tmp");
+    out->load_poly("tmp");
     printf("Done with tgio.load_poly.\n");
     fflush(stdout);
-    return tgio;
+}
+
+void convertMeshFile(std::string meshFileName, tetgenio *out) {
+    std::ifstream in(meshFileName);
+    std::string line;
+    std::vector<float> vertCoords;
+    std::vector<int> tetCoords;
+    while(std::getline(in, line)) {
+        if(line[0] == 'v') {
+            std::istringstream strm(&line[1]);
+            float x = 99, y = 99, z = 99;
+            if(!(strm >> x >> y >> z)) {
+                printf("Attempted to read line:\n%s\nAs string stream of x,y,z, but failed.\n", line.data());
+                printf("Read: %f, %f, %f\n", x, y, z);
+                continue;
+            }
+            vertCoords.push_back(x);
+            vertCoords.push_back(y);
+            vertCoords.push_back(z);
+        }
+        else if(line[0] == 't') {
+            std::istringstream strm(&line[1]);
+            int x = 99, y = 99, z = 99, w = 99;;
+            if(!(strm >> x >> y >> z >> w)) {
+                printf("Attempted to read line:\n%s\nAs string stream of x,y,z,w ints but failed.\n", line.data());
+                printf("Read: %d, %d, %d, %d\n", x, y, z, w);
+                continue;
+            }
+            tetCoords.push_back(x);
+            tetCoords.push_back(y);
+            tetCoords.push_back(z);
+            tetCoords.push_back(w);
+        }
+    }
+    std::ofstream ofile("tmp.ele");
+    // first ele. Line is num tets, num verts/shape (4 for tet), 0 boundary
+    ofile << tetCoords.size()/4 << " " << 4 << " " << 0;
+    ofile << std::endl;
+    for(int i = 0; i < tetCoords.size()/4; i++) {
+        ofile << i << " ";
+        ofile << tetCoords[i*4] << " ";
+        ofile << tetCoords[i*4+1] << " ";
+        ofile << tetCoords[i*4+2] << " ";
+        ofile << tetCoords[i*4+3];
+        ofile << std::endl;
+    }
+    std::ofstream onodes("tmp.node");
+    // Line is num nodes, dimension, num attributes, 0 for boundary
+    onodes << vertCoords.size()/3 << " " << 3 << " " << 0 << " " << 0;
+    onodes << std::endl;
+    for(int i = 0; i < vertCoords.size()/3; i++) {
+        onodes << i << " ";
+        onodes << vertCoords[i*3] << " ";
+        onodes << vertCoords[i*3+1] << " ";
+        onodes << vertCoords[i*3+2] << " ";
+        onodes << std::endl;
+    }
+
+    printf("About to tgio.load_node...\n");
+    fflush(stdout);
+    out->load_node("tmp");
+    printf("Done with tgio.load_node.\n");
+    printf("About to tgio.load_tet...\n");
+    out->load_tet("tmp");
+    printf("Done with tgio.load_tet.\n");
+    fflush(stdout);
 }
 
 tetgenbehavior tet_behavior;
@@ -245,10 +309,11 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     }
     std::string ext = filename.substr(ext_idx);
     std::string noext = filename.substr(0, ext_idx);
+    tetgenio out;
     if(ext.compare(".obj") == 0) {
         // TODO: parse obj, create tetgenio, tetrahedralize
-        tetgenio in = convertObjFile(filename);
-        tetgenio out;
+        tetgenio in;
+        convertObjFile(filename, &in);
         printf("About to tetrahedralize...\n");
         fflush(stdout);
         double start = get_time();
@@ -256,32 +321,12 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
         out.save_elements("tmp");
         printf("Done tetrahedralizing. Took %f secs.\n", get_time() - start);
         fflush(stdout);
-        m_tets = getTets(out);
-        m_baryTransforms.resize(m_tets.size());
-        m_points = getPoints(out);
-        m_norms.resize(m_points.size());
-        m_vels.resize(m_points.size());
-        m_pointInvMasses.resize(m_points.size());
-        m_pToTMap = tetsTouchingPoint(m_tets);
-        calcFacesAndNorms();
     }
     else if(ext.compare(".smesh") == 0) {
         // TODO: convert to .ele
-
         tetgenio in;
         in.load_poly((char *)noext.c_str());
-        tetgenio out;
-
         tetrahedralize(&tet_behavior, &in, &out);
-        m_tets = getTets(out);
-        m_baryTransforms.resize(m_tets.size());
-        m_points = getPoints(out);
-        m_norms.resize(m_points.size());
-        m_vels.resize(m_points.size());
-        m_pointInvMasses.resize(m_points.size());
-        m_pToTMap = tetsTouchingPoint(m_tets);
-        calcFacesAndNorms();
-
     }
     else if(ext.compare(".ele") == 0) {
         // TODO: read file
@@ -295,22 +340,16 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
             }
             fclose(f);
         }
-        tetgenio tets;
-        tets.load_tet((char*)noext.c_str());
+        out.load_tet((char*)noext.c_str());
         int nodeext_idx = nodefile.rfind('.');
         if(nodeext_idx == -1) {
             printf("Warning: file %s opened as nodefile, but no extension found. Not loading.\n", nodefile.data());
             return;
         }
-        tets.load_node((char*)nodefile.substr(0, nodeext_idx).c_str());
-        m_tets = getTets(tets);
-        m_baryTransforms.resize(m_tets.size());
-        m_points = getPoints(tets);
-        m_norms.resize(m_points.size());
-        m_vels.resize(m_points.size());
-        m_pointInvMasses.resize(m_points.size());
-        m_pToTMap = tetsTouchingPoint(m_tets);
-        calcFacesAndNorms();
+        out.load_node((char*)nodefile.substr(0, nodeext_idx).c_str());
+    }
+    else if(ext.compare(".mesh") == 0) {
+        convertMeshFile(filename, &out);
     }
     else if(ext.compare(".node") == 0) {
         printf("Warning: file %s opened as TetMesh, but is a .node file (list of points). You might have meant to open the associated .poly (for 2D mesh) or .ele (for 3D tetmesh) file.\n", filename.data());
@@ -319,6 +358,16 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     else {
         printf("Warning: file %s opened as TetMesh, but could not be read. Not loading.\n", filename.data());
     }
+
+    m_tets = getTets(out);
+    m_baryTransforms.resize(m_tets.size());
+    m_points = getPoints(out);
+    m_norms.resize(m_points.size());
+    m_vels.resize(m_points.size());
+    m_pointInvMasses.resize(m_points.size());
+    m_pToTMap = tetsTouchingPoint(m_tets);
+    calcFacesAndNorms();
+
     printf("Tets loaded: %d\n", m_tets.size());
     printf("m_faces size is now %d\n", m_faces.size());
     calcBaryTransforms();
@@ -335,7 +384,7 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     }*/
     // balloon everything out a bit
     for(int i = 0; i < m_points.size(); i++) {
-        m_points[i] *= 1.01;
+        m_points[i] *= 1.2;
     }
     calcNorms();
     printf("N surface faces: %d\n", m_faces.size());
@@ -445,8 +494,6 @@ void TetMesh::update(float timestep) {
     std::vector<glm::vec3> pointsCopy(m_points), velsCopy(m_vels);
     // then evaluate forces, and move everything forwards timestep/2
     for(int i = 0; i < m_points.size(); i++) {
-        if(m_pointInvMasses[i] > 10000000.f)
-            printf("inverse mass of pt is %f\n", m_pointInvMasses[i]);
         glm::vec3 accel = forcePerNode[i] * m_pointInvMasses[i];
         glm::vec3 velIncrement = accel * timestep / 2.f;
         m_points[i] += m_vels[i] * timestep + velIncrement / 2.f;

@@ -142,6 +142,7 @@ struct Settings {
     
     // FEM
     float femTimeStep;
+    int femStepsPerFrame;
     float femIncompressibility;
     float femRigidity;
     float femBulkViscosity;

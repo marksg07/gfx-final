@@ -145,6 +145,7 @@ void MainWindow::dataBind() {
     BIND(IntBinding::bindTextbox(ui->rayBumpDepth,             settings.bumpDepth))
             
     BIND(FloatBinding::bindTextbox(ui->femIncompressibility, settings.femIncompressibility, 0, 1000))
+    BIND(IntBinding::bindTextbox(ui->femStepsPerFrame, settings.femStepsPerFrame))
     BIND(FloatBinding::bindTextbox(ui->femRigidity, settings.femRigidity, 0, 1000))
     BIND(FloatBinding::bindTextbox(ui->femTimeStep, settings.femTimeStep, 0, 1000))
     BIND(FloatBinding::bindTextbox(ui->femBulkViscosity, settings.femBulkViscosity, 1e-9, 10))
