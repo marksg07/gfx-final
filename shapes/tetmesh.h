@@ -1,7 +1,11 @@
 #ifndef TETMESH_H
 #define TETMESH_H
-#include "tetrahedron.h"
 #include <unordered_map>
+#include "ui/SupportCanvas3D.h"
+#include "scenegraph/Scene.h"
+#include "openglshape.h"
+#include "ui/mainwindow.h"
+#include "gl/shaders/ShaderAttribLocations.h"
 
 // combination hash function that combines hashes of each element
 template <typename...> struct hashh;
