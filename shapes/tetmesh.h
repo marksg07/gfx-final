@@ -1,0 +1,90 @@
+#ifndef TETMESH_H
+#define TETMESH_H
+#include "tetrahedron.h"
+#include <unordered_map>
+
+// combination hash function that combines hashes of each element
+template <typename...> struct hashh;
+
+template<typename T>
+struct hashh<T>
+    : public std::hash<T>
+{
+    using std::hash<T>::hash;
+};
+
+
+template <typename T, typename... Rest>
+struct hashh<T, Rest...>
+{
+    inline std::size_t operator()(const T& v, const Rest&... rest) {
+        std::size_t seed = hashh<Rest...>{}(rest...);
+        seed ^= hashh<T>{}(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
+    }
+};
+
+std::size_t hash_ivec3_fn(const glm::ivec3& v);
+
+struct ivec3_hash : public std::unary_function<glm::ivec3, std::size_t> {
+    std::size_t operator()(const glm::ivec3& v) const {
+        return hash_ivec3_fn(v);
+    }
+};
+
+// remember, triangles are in order: 124, 243, 431, 312
+typedef struct tet {
+    int p1, p2, p3, p4;
+    int &operator[] (int index) {
+        switch(index) {
+        case 0:
+            return p1;
+        case 1:
+            return p2;
+        case 2:
+            return p3;
+        case 3:
+            return p4;
+        }
+        throw std::out_of_range("Index out of range in tet_t[] operator");
+    }
+} tet_t;
+
+typedef struct materialFEM {
+    float incompressibility;
+    float rigidity;
+    float viscous1, viscous2;
+} mat_t;
+
+
+class TetMesh
+{
+public:
+    TetMesh(){}
+    TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map);
+    TetMesh(std::string filename, std::string nodefile=std::string());
+    std::vector<TetMesh> fracture(int tetIdx, glm::vec3 fracNorm);
+    void update(float timestep);
+    void draw();
+    const object_node_t& getONode() { return m_onode; }
+private:
+    void calcFacesAndNorms();
+    void calcNorms();
+    void computeStressForces(std::vector<glm::vec3>& forcePerNode);
+    void calcBaryTransforms();
+    void calcPointInvMasses();
+    std::vector<glm::vec3> m_points;
+    std::vector<glm::vec3> m_vels;
+    std::vector<glm::vec3> m_norms;
+    std::vector<tet_t> m_tets;
+    std::unordered_map<int, std::vector<int>> m_pToTMap;
+    std::unordered_map<glm::ivec3, bool, ivec3_hash> m_faces;
+    std::vector<glm::mat3x3> m_baryTransforms;
+    object_node_t m_onode;
+    mat_t m_material;
+    // using lumped mass model, so rather than store an entire NxN matrix we will just store a vector
+    std::vector<float> m_pointInvMasses;
+
+};
+
+#endif // TETMESH_H
