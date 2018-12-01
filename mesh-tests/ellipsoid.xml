@@ -1,0 +1,61 @@
+<!-- courtesy of psastras, 2009 -->
+<scenefile>
+    <globaldata>
+        <diffusecoeff v="1.0"/>
+        <specularcoeff v="0.5"/>
+        <ambientcoeff v="0.5"/>
+    </globaldata>
+
+    <lightdata>
+        <id v="0"/>
+        <color r="1" g="1" b="1"/>
+        <position x="3" y="3" z="3"/>
+    </lightdata>
+
+    <lightdata>
+		<id v="1"/>
+		<color r="0.6" g="0.4" b="0.6"/>
+		<function v1="1.5" v2="0" v3="0"/>
+		<type v="directional"/>
+		<direction x="0" y="0" z="1"/>
+	</lightdata>
+
+	<lightdata>
+		<id v="2"/>
+		<color r="0.8" g="1" b="0.5"/>
+		<function v1="1.5" v2="0" v3="0"/>
+		<type v="directional"/>
+		<direction x="1" y="1" z="1"/>
+	</lightdata>
+
+    <cameradata>
+        <pos x="0" y="0" z="5"/>
+        <focus x="0" y="0" z="-1"/>
+        <up x="0" y="1" z="0"/>
+        <heightangle v="45"/>
+    </cameradata>
+
+    <object type="tree" name="root">
+        <transblock>           
+            <scale x="3.0" y="3.0" z="3.0" />
+            <object type="primitive" name="mesh" meshfile="example-meshes/ellipsoid.mesh">
+                <diffuse r="1" g="1" b="1"/>
+            </object>
+        </transblock>
+        <transblock>
+            <translate x="0" y="5" z="-1" />
+            <scale x="10" y="10" z="0.1" />
+            <object type="primitive" name="cube">
+                <diffuse r="1" g="1" b="1" />
+            </object>
+        </transblock>
+        <transblock>
+            <translate x="0" y="-5" z="-1" />
+            <scale x="10" y="10" z="0.1" />
+            <object type="primitive" name="cube">
+                <diffuse r="0.1" g="0.1" b="0.1" />
+            </object>
+        </transblock>
+    </object>
+
+</scenefile>
