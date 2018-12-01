@@ -324,7 +324,7 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     calcBaryTransforms();
     calcPointInvMasses();
     srand(time(NULL));
-    for(int i = 0; i < 1; i++) {
+    /*for(int i = 0; i < 1; i++) {
         auto it = m_faces.begin(); // get random pt
         int id = rand() % m_faces.size();
         std::advance(it, id);
@@ -332,6 +332,10 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
         assert(it->second);
         int p1idx = it->first.x;
         m_points[p1idx] += glm::normalize(m_norms[p1idx]) / 1.f;// * 5.f;
+    }*/
+    // balloon everything out a bit
+    for(int i = 0; i < m_points.size(); i++) {
+        m_points[i] *= 1.01;
     }
     calcNorms();
     printf("N surface faces: %d\n", m_faces.size());
@@ -355,6 +359,8 @@ TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique
     m_tets = copyFrom->m_tets;
     m_pToTMap = copyFrom->m_pToTMap;
     m_baryTransforms = copyFrom->m_baryTransforms;
+    m_pointInvMasses = copyFrom->m_pointInvMasses;
+    m_vels = copyFrom->m_vels;
 }
 
 std::vector<TetMesh> TetMesh::fracture(int pointIdx, glm::vec3 fracNorm) {
@@ -427,7 +433,6 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
 }
 
 void TetMesh::update(float timestep) {
-    printf("updating w/ step %f\n", timestep);
     // step 1: get all forces.
     std::vector<glm::vec3> forcePerNode;
     forcePerNode.resize(m_points.size());
@@ -435,11 +440,27 @@ void TetMesh::update(float timestep) {
     //std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3(0, -9.81, 0));
     // Stress (elastic + viscous):
     computeStressForces(forcePerNode);
-    // step 2:
+    // midpoint method:
+    // copy old points and vels for final calc
+    std::vector<glm::vec3> pointsCopy(m_points), velsCopy(m_vels);
+    // then evaluate forces, and move everything forwards timestep/2
+    for(int i = 0; i < m_points.size(); i++) {
+        if(m_pointInvMasses[i] > 10000000.f)
+            printf("inverse mass of pt is %f\n", m_pointInvMasses[i]);
+        glm::vec3 accel = forcePerNode[i] * m_pointInvMasses[i];
+        glm::vec3 velIncrement = accel * timestep / 2.f;
+        m_points[i] += m_vels[i] * timestep + velIncrement / 2.f;
+        m_vels[i] += velIncrement;
+    }
+    // evaluate actual aceels at the midpoint
+    std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
+    computeStressForces(forcePerNode);
+    // now use the accels at midp as derivative of vel
     for(int i = 0; i < m_points.size(); i++) {
         glm::vec3 accel = forcePerNode[i] * m_pointInvMasses[i];
-        m_points[i] += m_vels[i] * timestep + (accel * timestep) / 2.f;
-        m_vels[i] += accel * timestep;
+        glm::vec3 velIncrement = accel * timestep;
+        m_points[i] = pointsCopy[i] + m_vels[i] * timestep + velIncrement / 2.f;
+        m_vels[i] = velsCopy[i] + velIncrement;
     }
     calcNorms();
 }
@@ -486,6 +507,7 @@ void TetMesh::calcPointInvMasses() {
     // calculate masses for each point based on tet volumes
     assert(m_pointInvMasses.size() == m_points.size());
     std::fill(m_pointInvMasses.begin(), m_pointInvMasses.end(), 0);
+    float maxvol = -1, minvol = INFINITY;
     for(int i = 0; i < m_tets.size(); i++) {
         // let density = 4000 (i.e. water*4), then we can add tet vol to each node mass
         tet_t tet = m_tets[i];
@@ -494,14 +516,27 @@ void TetMesh::calcPointInvMasses() {
         auto p3 = m_points[tet.p3];
         auto p4 = m_points[tet.p4];
         float volume = 1000*glm::length(glm::dot(p1 - p2, glm::cross(p4 - p2, p3 - p2)));
+        if(volume > maxvol)
+            maxvol = volume;
+        if(volume < minvol) {
+            minvol = volume;
+            printf("at min:\np1: %f,%f,%f\np2: %f,%f,%f\np3: %f,%f,%f\np4: %f,%f,%f\n",
+                   p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
+        }
         m_pointInvMasses[tet.p1] += volume;
         m_pointInvMasses[tet.p2] += volume;
         m_pointInvMasses[tet.p3] += volume;
         m_pointInvMasses[tet.p4] += volume;
     }
+    float sum = 0;
+    float minm = INFINITY;
     for(int i = 0; i < m_pointInvMasses.size(); i++) {
+        sum += m_pointInvMasses[i];
+        if(m_pointInvMasses[i] < minm)
+            minm = m_pointInvMasses[i];
         m_pointInvMasses[i] = 1/m_pointInvMasses[i];
     }
+    printf("Total mass is %f, smallest mass is %f w/ inverse %f\nMax volume is %f, min volume is %f", sum, minm, 1.f/minm, maxvol, minvol);
 }
 
 bool setIfContains(std::unordered_map<glm::ivec3, bool, ivec3_hash>& map, glm::ivec3 vec) {
