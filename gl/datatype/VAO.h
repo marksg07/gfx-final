@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "gl/datatype/VBO.h"
 #include "GL/glew.h"
 
 namespace CS123 { namespace GL {

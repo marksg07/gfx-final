@@ -25,6 +25,7 @@
 #include <functional>
 #include <QRgb>
 #include <glm/gtx/string_cast.hpp>
+#include "CamtransCamera.h"
 
 const float EPSILON = 5e-4;
 
@@ -135,6 +136,7 @@ struct CS123SceneLightData {
     float angle;         // Only applicable to spot lights
 
     float width, height; // Only applicable to area lights
+
 };
 
 // Data for scene camera

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include "Camera.h"
+#include "gl/util/FullScreenQuad.h"
 
 #include "Settings.h"
 #include "SupportCanvas3D.h"
@@ -27,6 +28,15 @@ SceneviewScene::SceneviewScene()
     loadWireframeShader();
     loadNormalsShader();
     loadNormalsArrowShader();
+    loadShadowShader();
+
+    m_fsq = std::make_unique<CS123::GL::FullScreenQuad>();
+
+    // hacks for now
+    size_t w = 1024;
+    size_t h = 1024;
+    m_depthFBO = std::make_unique<CS123::GL::FBO>(1, FBO::DEPTH_STENCIL_ATTACHMENT::DEPTH_ONLY, w, h,
+                                           TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
 
 
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CUBE] = std::make_shared<GLCube>(2, 2, 255.0);
@@ -36,6 +46,7 @@ SceneviewScene::SceneviewScene()
 
     // Has broken normals...
     m_dfl_shapes[PrimitiveType::PRIMITIVE_TORUS] = std::make_shared<GLTorus>(20, 20, 255.0);
+
 }
 
 SceneviewScene::~SceneviewScene()
@@ -46,6 +57,12 @@ void SceneviewScene::loadPhongShader() {
     std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/default.vert");
     std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/default.frag");
     m_phongShader = std::make_unique<CS123Shader>(vertexSource, fragmentSource);
+}
+
+void SceneviewScene::loadShadowShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.frag");
+    m_shadowShader = std::make_unique<ShadowShader>(vertexSource, fragmentSource);
 }
 
 void SceneviewScene::loadWireframeShader() {
@@ -71,6 +88,19 @@ void SceneviewScene::loadNormalsArrowShader() {
 void SceneviewScene::render(SupportCanvas3D *context) {
     setClearColor();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    // shadow mapping
+    m_depthFBO->bind();
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    m_depthFBO->unbind();
+
+    glViewport(0, 0, m_width, m_height);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // shadow mapping end
+
 
     m_phongShader->bind();
     setSceneUniforms(context);
@@ -182,6 +212,27 @@ void SceneviewScene::renderGeometry() {
     // This is where you should render the geometry of the scene. Use what you
     // know about OpenGL and leverage your Shapes classes to get the job done.
     //
+
+#if 0
+    nextFBO->bind();
+
+    glUseProgram(m_particleUpdateProgram);
+    glActiveTexture(GL_TEXTURE0);
+    prevFBO->getColorAttachment(0).bind();
+    glActiveTexture(GL_TEXTURE1);
+    prevFBO->getColorAttachment(1).bind();
+
+
+    glUniform1f(glGetUniformLocation(m_particleUpdateProgram, "firstPass"), firstPass);
+    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "numParticles"), m_numParticles);
+    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "prevPos"), 0);
+    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "prevVel"), 1);
+
+    m_quad->draw();
+
+    // TODO [Task 17] Draw the particles from nextFBO
+    nextFBO->unbind();
+#endif
 
     for(auto r : m_renderables)
     {

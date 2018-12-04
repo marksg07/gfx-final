@@ -42,4 +42,6 @@ unsigned int RenderBuffer::id() const {
 
 void RenderBuffer::unbind() const {
     // TODO Don't forget to unbind!
+
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }

@@ -7,6 +7,9 @@
 #include <memory>
 #include "shapes/GLShape.h"
 #include "CS123SceneData.h"
+#include "gl/shaders/ShadowShader.h"
+#include "gl/datatype/FBO.h"
+#include "gl/util/FullScreenQuad.h"
 
 namespace CS123 { namespace GL {
 
@@ -52,6 +55,12 @@ private:
     void loadNormalsShader();
     void loadNormalsArrowShader();
     void loadFragShader();
+    void loadShadowShader();
+
+     void addLight(const CS123SceneLightData &sceneLight) override
+     {
+        m_lights.push_back(sceneLight);
+     }
 
     void setSceneUniforms(SupportCanvas3D *context);
     void setMatrixUniforms(CS123::GL::Shader *shader, SupportCanvas3D *context);
@@ -71,6 +80,11 @@ private:
     std::unique_ptr<CS123::GL::Shader> m_normalsArrowShader;
     std::unique_ptr<CS123::GL::Shader> m_textureShader;
 
+    std::unique_ptr<ShadowShader> m_shadowShader;
+    std::unique_ptr<CS123::GL::FBO> m_depthFBO;
+    std::unique_ptr<CS123::GL::FullScreenQuad> m_fsq;
+
+    //std::map<CS123SceneLightData*, std::unique_ptr<ShadowMap>> m_shadowMaps;
 
     std::map<PrimitiveType, std::shared_ptr<GLShape>> m_shapes;
 
