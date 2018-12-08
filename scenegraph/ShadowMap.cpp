@@ -153,11 +153,9 @@ void ShadowMap::update(Camera* camera)
 void ShadowMap::drawDBG()
 {
     m_dbgShader->bind();
+    m_dbgShader->setTexture("shadowMap", texture());
 
-    m_dfbo->bindTexture();
     ShadowMap::fsq->draw();
-
-    m_dfbo->unbindTexture();
 
     m_dbgShader->unbind();
 }

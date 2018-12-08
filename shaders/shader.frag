@@ -1,10 +1,13 @@
-#version 330 core
+#version 400 core
 
 in vec4 shadowCoord;
 in vec2 uv;
 
-uniform sampler2D shadowMap;
-uniform mat4 shadowMat;
+
+const int MAX_LIGHTS = 10;
+
+uniform sampler2D shadowMap[MAX_LIGHTS];
+uniform mat4 shadowMat[MAX_LIGHTS];
 // Light data
 
 uniform bool useLighting;
@@ -12,7 +15,6 @@ uniform bool useLighting;
 uniform int useTexture = 0;
 uniform vec2 repeatUV;
 
-const int MAX_LIGHTS = 10;
 uniform int lightTypes[MAX_LIGHTS];         // 0 for point, 1 for directional
 uniform vec3 lightPositions[MAX_LIGHTS];    // For point lights
 uniform vec3 lightDirections[MAX_LIGHTS];   // For directional lights
@@ -31,7 +33,6 @@ uniform mat4 m;
 in vec4 position_cameraSpace;
 in vec4 normal_cameraSpace;
 in vec4 obj_position;
-in float bias;
 
 vec3 o_amb;
 vec3 o_diff;
@@ -43,6 +44,9 @@ in vec2 texc;
 out vec4 fragColor;
 
 //uniform sampler2D tex;
+
+uniform int numLights = 0;
+float bias = 0.005;
 
 void main(){
 
@@ -68,12 +72,14 @@ void main(){
     o_diff = vec3(0);
     o_spec = vec3(0);
 
-    float visibility = 1.0;
     float found = 0.0;
     if (useLighting) {
         o_amb = ambient_color.xyz; // Add ambient component
 
-        for (int i = 0; i < MAX_LIGHTS; i++) {
+
+        float visibility = 1.0;
+        for (int i = 0; i <= numLights; i++) {
+
 
 
             vec4 vertexToLight = vec4(0);
@@ -87,13 +93,18 @@ void main(){
 
                 vertexToLight = normalize(v * vec4(-lightDirections[i], 0));
 
+
+                bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0, 0.01);
+                vec4 shadowCoord = shadowMat[i] * m * obj_position;
+                if (texture(shadowMap[i], shadowCoord.xy).r < shadowCoord.z - bias) {
+                    visibility = 0.5;
+                } else {
+                     visibility = 1.0;
+                }
+
             }
 
 
-            vec4 shadowCoord = shadowMat * m * obj_position;
-            if (texture(shadowMap, shadowCoord.xy).r < shadowCoord.z - bias) {
-                visibility = 0.5;
-            }
 
             // Add diffuse component
             float diffuseIntensity = max(0.0, dot(vertexToLight, normal_cameraSpace));

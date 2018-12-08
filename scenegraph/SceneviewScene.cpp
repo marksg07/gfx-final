@@ -124,6 +124,9 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     glViewport(0, 0, m_width * ratio, m_height * ratio);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glCullFace(GL_BACK);
+
+
     std::shared_ptr<ShadowMap> m = m_shadowMaps[light];
     if (settings.useKDTree)
     {
@@ -135,17 +138,14 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     m_phongShader->bind();
 
-
-    m_phongShader->setUniform("shadowMat", m->biasMVP());
-    //m_phongShader->setTexture("shadowMap", m->texture());
-
-    m_phongShader->setTexture("shadowMap", m->texture());
-
+    for(size_t i = 0; i < m_lights.size(); i++)
+    {
+        m_phongShader->setUniformArrayByIndex("shadowMat", m_shadowMaps[i]->biasMVP(), i);
+        m_phongShader->setTexture("shadowMap[" + std::to_string(i) + "]", m_shadowMaps[i]->texture());
+    }
 
     setSceneUniforms(context);
     setLights();
-
-    glCullFace(GL_BACK);
     renderGeometry();
 
 
@@ -248,6 +248,8 @@ void SceneviewScene::setLights()
     {
         m_phongShader->setLight(light);
     }
+
+    m_phongShader->setUniform("numLights", (int) m_lights.size());
 }
 
 #include "shapes/GLSphere.h"

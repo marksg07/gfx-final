@@ -16,9 +16,7 @@ public:
     virtual void unbind() const override;
 
 protected:
-    Texture2D()
-        : Texture() {
-        std::cout << (void*) this << " - 2d-tex: " << id() << std::endl;
+    Texture2D() {
     }
 };
 
