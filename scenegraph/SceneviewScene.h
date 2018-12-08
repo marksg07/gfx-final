@@ -10,6 +10,9 @@
 #include "gl/shaders/ShadowShader.h"
 #include "gl/datatype/FBO.h"
 #include "gl/util/FullScreenQuad.h"
+#include "ShadowMap.h"
+
+class ShadowMap;
 
 namespace CS123 { namespace GL {
 
@@ -35,7 +38,7 @@ namespace CS123 { namespace GL {
  */
 class SceneviewScene : public OpenGLScene {
 public:
-    SceneviewScene();
+    SceneviewScene(size_t w, size_t h);
     virtual ~SceneviewScene();
 
     virtual void render(SupportCanvas3D *context) override;
@@ -45,8 +48,8 @@ public:
     // pointer.  This will be used during the "modeler" lab, so don't worry about it for now.
     void setSelection(int x, int y);
 
-private:
 
+    void renderGeometryShadow();
 
 private:
 
@@ -56,6 +59,7 @@ private:
     void loadNormalsArrowShader();
     void loadFragShader();
     void loadShadowShader();
+    void loadShadowMapShader();
 
      void addLight(const CS123SceneLightData &sceneLight) override
      {
@@ -79,16 +83,19 @@ private:
     std::unique_ptr<CS123::GL::Shader> m_normalsShader;
     std::unique_ptr<CS123::GL::Shader> m_normalsArrowShader;
     std::unique_ptr<CS123::GL::Shader> m_textureShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowShader;
 
-    std::unique_ptr<ShadowShader> m_shadowShader;
-    std::unique_ptr<CS123::GL::FBO> m_depthFBO;
+
+    std::shared_ptr<CS123::GL::Shader> m_shadowMapShader;
     std::unique_ptr<CS123::GL::FullScreenQuad> m_fsq;
 
-    //std::map<CS123SceneLightData*, std::unique_ptr<ShadowMap>> m_shadowMaps;
+    std::vector<std::shared_ptr<ShadowMap>> m_shadowMaps;
 
     std::map<PrimitiveType, std::shared_ptr<GLShape>> m_shapes;
 
     std::map<PrimitiveType, std::shared_ptr<GLShape>> m_dfl_shapes;
+
+    size_t m_width, m_height;
 };
 
 #endif // SCENEVIEWSCENE_H

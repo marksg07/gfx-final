@@ -102,7 +102,7 @@ void SupportCanvas3D::initializeOpenGLSettings() {
 }
 
 void SupportCanvas3D::initializeScenes() {
-    m_sceneviewScene = std::make_unique<SceneviewScene>();
+    m_sceneviewScene = std::make_unique<SceneviewScene>(width(), height());
     m_shapesScene = std::make_unique<ShapesScene>(width(), height());
 }
 
@@ -140,7 +140,7 @@ void SupportCanvas3D::setSceneFromSettings() {
 }
 
 void SupportCanvas3D::loadSceneviewSceneFromParser(CS123XmlSceneParser &parser) {
-    m_sceneviewScene = std::make_unique<SceneviewScene>();
+    m_sceneviewScene = std::make_unique<SceneviewScene>(width(), height());
     Scene::parse(m_sceneviewScene.get(), &parser);
     m_settingsDirty = true;
 }

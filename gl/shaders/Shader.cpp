@@ -268,6 +268,9 @@ void Shader::discoverAttributes() {
         GLchar name[bufSize];
         glGetActiveAttrib(m_programID, i, bufSize, &nameLength, &arraySize, &type, name);
         name[std::min(nameLength, bufSize - 1)] = 0;
+
+          std::cout << "found[" << m_programID << "]: " << name << std::endl;
+
         m_attributes[std::string(name)] = glGetAttribLocation(m_programID, name);
     }
     unbind();
@@ -287,6 +290,9 @@ void Shader::discoverUniforms() {
         name[std::min(nameLength, bufSize - 1)] = 0;
 
         std::string strname(name);
+
+        std::cout << "found[" << m_programID << "]: " << strname << "(" << i << ")" << std::endl;
+
         if (isUniformArray(name, nameLength)) {
             addUniformArray(strname, arraySize);
         } else if (isTexture(type)) {

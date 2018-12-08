@@ -3,14 +3,16 @@
 #include <QGLWidget>
 #include <iostream>
 #include <sstream>
+#include <QGuiApplication>
 #include "Camera.h"
 #include "gl/util/FullScreenQuad.h"
+#include "glm/gtx/string_cast.hpp"
+#include "gl/textures/DepthBuffer.h"
 
 #include "Settings.h"
 #include "SupportCanvas3D.h"
 #include "ResourceLoader.h"
 #include "gl/shaders/CS123Shader.h"
-#include "glm/gtx/string_cast.hpp"
 
 #include "shapes/GLCube.h"
 #include "shapes/GLCone.h"
@@ -20,8 +22,8 @@
 
 using namespace CS123::GL;
 
-
-SceneviewScene::SceneviewScene()
+SceneviewScene::SceneviewScene(size_t w, size_t h)
+    : m_width(w), m_height(h)
 {
     // TODO: [SCENEVIEW] Set up anything you need for your Sceneview scene here...
     loadPhongShader();
@@ -29,15 +31,7 @@ SceneviewScene::SceneviewScene()
     loadNormalsShader();
     loadNormalsArrowShader();
     loadShadowShader();
-
-    m_fsq = std::make_unique<CS123::GL::FullScreenQuad>();
-
-    // hacks for now
-    size_t w = 1024;
-    size_t h = 1024;
-    m_depthFBO = std::make_unique<CS123::GL::FBO>(1, FBO::DEPTH_STENCIL_ATTACHMENT::DEPTH_ONLY, w, h,
-                                           TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
-
+    loadShadowMapShader();
 
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CUBE] = std::make_shared<GLCube>(2, 2, 255.0);
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CONE] = std::make_shared<GLCone>(10, 10, 255.0);
@@ -46,6 +40,7 @@ SceneviewScene::SceneviewScene()
 
     // Has broken normals...
     m_dfl_shapes[PrimitiveType::PRIMITIVE_TORUS] = std::make_shared<GLTorus>(20, 20, 255.0);
+
 
 }
 
@@ -62,7 +57,14 @@ void SceneviewScene::loadPhongShader() {
 void SceneviewScene::loadShadowShader() {
     std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.vert");
     std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.frag");
-    m_shadowShader = std::make_unique<ShadowShader>(vertexSource, fragmentSource);
+    m_shadowShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
+
+void SceneviewScene::loadShadowMapShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow_map.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow_map.frag");
+    m_shadowMapShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
 }
 
 void SceneviewScene::loadWireframeShader() {
@@ -91,22 +93,62 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
 
     // shadow mapping
-    m_depthFBO->bind();
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    int light = -1;
+    for (int i = 0; i < m_lights.size(); i++)
+    {
+        CS123SceneLightData* l = &m_lights[i];
+        if (l->type == LightType::LIGHT_DIRECTIONAL)
+        {
+            light = i;
+            break;
+        }
+    }
 
-    m_depthFBO->unbind();
+    // For now just get first directional light
+    if (light == -1)
+    {
+        return;
 
-    glViewport(0, 0, m_width, m_height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
     // shadow mapping end
 
+    for(auto& m : m_shadowMaps)
+    {
+        m->update(context->getCamera());
+    }
+
+
+    // Restore...
+    float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
+    glViewport(0, 0, m_width * ratio, m_height * ratio);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    std::shared_ptr<ShadowMap> m = m_shadowMaps[light];
+    if (settings.useKDTree)
+    {
+        m->drawDBG();
+
+        return;
+
+    }
 
     m_phongShader->bind();
+
+
+    m_phongShader->setUniform("shadowMat", m->biasMVP());
+    //m_phongShader->setTexture("shadowMap", m->texture());
+
+    m_phongShader->setTexture("shadowMap", m->texture());
+
+
     setSceneUniforms(context);
     setLights();
+
+    glCullFace(GL_BACK);
     renderGeometry();
-    glBindTexture(GL_TEXTURE_2D, 0);
+
+
     m_phongShader->unbind();
 
 }
@@ -114,7 +156,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {
     Camera *camera = context->getCamera();
     m_phongShader->setUniform("useLighting", settings.useLighting);
-    m_phongShader->setUniform("useArrowOffsets", false);
+    //m_phongShader->setUniform("useArrowOffsets", false);
     m_phongShader->setUniform("p" , camera->getProjectionMatrix());
     m_phongShader->setUniform("v", camera->getViewMatrix());
 }
@@ -180,6 +222,12 @@ void SceneviewScene::setupLevelOfDetail()
             m_shapes[it->first] = m_dfl_shapes[it->first];
         }
     }
+
+
+    for(auto l : m_lights)
+    {
+        m_shadowMaps.push_back(std::make_shared<ShadowMap>(m_shadowShader, m_shadowMapShader, l, this));
+    }
 }
 
 void SceneviewScene::setLights()
@@ -203,7 +251,7 @@ void SceneviewScene::setLights()
 }
 
 #include "shapes/GLSphere.h"
-void SceneviewScene::renderGeometry() {
+void SceneviewScene::renderGeometryShadow() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     // TODO: [SCENEVIEW] Fill this in...
     // You shouldn't need to write *any* OpenGL in this class!
@@ -213,26 +261,29 @@ void SceneviewScene::renderGeometry() {
     // know about OpenGL and leverage your Shapes classes to get the job done.
     //
 
-#if 0
-    nextFBO->bind();
+    for(auto r : m_renderables)
+    {
+        //std::cout << glm::to_string(r.transform) << std::endl;
+        //std::cout << "ayy: "<< glm::to_string(glm::mat4(1.0f)) << std::endl;
 
-    glUseProgram(m_particleUpdateProgram);
-    glActiveTexture(GL_TEXTURE0);
-    prevFBO->getColorAttachment(0).bind();
-    glActiveTexture(GL_TEXTURE1);
-    prevFBO->getColorAttachment(1).bind();
+        m_shadowShader->setUniform("m", r.transform);
+        if (m_shapes.count(r.primitive.type))
+        {
+            m_shapes[r.primitive.type]->draw();
+        }
+    }
+}
 
 
-    glUniform1f(glGetUniformLocation(m_particleUpdateProgram, "firstPass"), firstPass);
-    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "numParticles"), m_numParticles);
-    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "prevPos"), 0);
-    glUniform1i(glGetUniformLocation(m_particleUpdateProgram, "prevVel"), 1);
-
-    m_quad->draw();
-
-    // TODO [Task 17] Draw the particles from nextFBO
-    nextFBO->unbind();
-#endif
+void SceneviewScene::renderGeometry() {
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // TODO: [SCENEVIEW] Fill this in...
+    // You shouldn't need to write *any* OpenGL in this class!
+    //
+    //
+    // This is where you should render the geometry of the scene. Use what you
+    // know about OpenGL and leverage your Shapes classes to get the job done.
+    //
 
     for(auto r : m_renderables)
     {
@@ -252,7 +303,7 @@ void SceneviewScene::renderGeometry() {
             m_phongShader->setUniform("repeatUV", glm::vec2(r.primitive.material.textureMap.repeatU, r.primitive.material.textureMap.repeatV));
 
         } else {
-            m_phongShader->setUniform("useTexture", 0);
+            //m_phongShader->setUniform("useTexture", 0);
         }
 
         // Don't render shapes we don't have

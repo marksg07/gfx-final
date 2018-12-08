@@ -21,12 +21,10 @@ public:
 
     void init()
     {
-        glGenFramebuffers(1, &fbo);
     }
 
 private:
 
-    GLuint fbo;
 
 };
 

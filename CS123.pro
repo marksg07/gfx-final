@@ -89,7 +89,9 @@ SOURCES += \
     scenegraph/IntersectionManager.cpp \
     scenegraph/KDTree.cpp \
     scenegraph/ShadowMap.cpp \
-    gl/shaders/ShadowShader.cpp
+    gl/shaders/ShadowShader.cpp \
+    gl/textures/DepthTexture.cpp \
+    gl/datatype/DepthFBO.cpp
 
 
 HEADERS += \
@@ -167,7 +169,9 @@ HEADERS += \
     scenegraph/ThreadPool.h \
     scenegraph/KDTree.h \
     scenegraph/ShadowMap.h \
-    gl/shaders/ShadowShader.h
+    gl/shaders/ShadowShader.h \
+    gl/textures/DepthTexture.h \
+    gl/datatype/DepthFBO.h
 
 
 FORMS += ui/mainwindow.ui
@@ -202,7 +206,9 @@ OTHER_FILES += shaders/shader.frag \
     Intersect_README.txt \
     Ray_README.txt \
     shaders/shadow.frag \
-    shaders/shadow.vert
+    shaders/shadow.vert \
+    shaders/shadow_map.frag \
+    shaders/shadow_map.vert
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2

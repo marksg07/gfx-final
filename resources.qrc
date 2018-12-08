@@ -15,7 +15,9 @@
         <file alias="test.frag">shaders/test/shader.frag</file>
         <file alias="test.vert">shaders/test/shader.vert</file>
         <file alias="texture.frag">shaders/texture.frag</file>
-        <file>shaders/shadow.vert</file>
-        <file>shaders/shadow.frag</file>
+        <file alias="shadow.vert">shaders/shadow.vert</file>
+        <file alias="shadow.frag">shaders/shadow.frag</file>
+        <file alias="shadow_map.vert">shaders/shadow_map.vert</file>
+        <file alias="shadow_map.frag">shaders/shadow_map.frag</file>
     </qresource>
 </RCC>
