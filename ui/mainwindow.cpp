@@ -437,3 +437,11 @@ void MainWindow::on_femSimulate_clicked() {
 void MainWindow::on_femStop_clicked() {
     m_canvas3D->on_femStop_clicked();
 }
+
+void MainWindow::on_femStepOnce_clicked() {
+    m_canvas3D->on_femStepOnce_clicked();
+}
+
+void MainWindow::on_femRestart_clicked() {
+    m_canvas3D->on_femRestart_clicked();
+}

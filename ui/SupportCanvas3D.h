@@ -76,12 +76,12 @@ public slots:
             update();
         });
     }
-    void femSimulate();
-    void femStop();
     void on_femSimulate_clicked();
     void on_femStop_clicked();
     //void on_femPull_clicked();
     //void on_femPush_clicked();
+    void on_femStepOnce_clicked();
+    void on_femRestart_clicked();
 signals:
     void aspectRatioChanged();
 

@@ -247,21 +247,24 @@ void SupportCanvas3D::updateCameraClip() {
     m_defaultPerspectiveCamera->setClip(settings.cameraNear, settings.cameraFar);
 }
 
-void SupportCanvas3D::femSimulate() {
+void SupportCanvas3D::on_femSimulate_clicked() {
     if(m_sceneviewScene)
         m_sceneviewScene->startSimulation();
 }
-void SupportCanvas3D::femStop() {
+void SupportCanvas3D::on_femStop_clicked() {
     if(m_sceneviewScene)
         m_sceneviewScene->stopSimulation();
 }
-void SupportCanvas3D::on_femSimulate_clicked() {
-    printf("femsimulate click\n");
-    fflush(stdout);
-    femSimulate();
+
+void SupportCanvas3D::on_femStepOnce_clicked() {
+    if(m_sceneviewScene)
+        m_sceneviewScene->stepSimulation(this);
 }
-void SupportCanvas3D::on_femStop_clicked() {
-    femStop();
+
+void SupportCanvas3D::on_femRestart_clicked() {
+    if(m_sceneviewScene)
+        0;
+        /*m_sceneviewScene->restartSimulation(this);*/
 }
 
 
@@ -269,6 +272,10 @@ void SupportCanvas3D::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::RightButton) {
         getCamera()->mouseDown(event->x(), event->y());
         m_isDragging = true;
+        update();
+    }
+    else if(event->button() == Qt::LeftButton) {
+        getCamera()->mouse1Clicked(-1);
         update();
     }
 }

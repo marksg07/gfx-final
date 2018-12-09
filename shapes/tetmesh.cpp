@@ -10,6 +10,14 @@
 #include <glm/gtx/random.hpp>
 #include <unordered_set>
 #include "Settings.h"
+//#include <Eigen/Dense>
+
+/*
+ * Incompressibility: 1000
+ * Rigidity: 1000
+ * Viscosity: 10
+ * Density: 1200
+ */
 
 std::size_t hash_ivec3_fn(const glm::ivec3& v) {
     hashh<int, int, int> hasher;
@@ -364,14 +372,14 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     m_points = getPoints(out);
     m_norms.resize(m_points.size());
     m_vels.resize(m_points.size());
-    m_pointInvMasses.resize(m_points.size());
+    m_pointMasses.resize(m_points.size());
     m_pToTMap = tetsTouchingPoint(m_tets);
     calcFacesAndNorms();
 
     printf("Tets loaded: %d\n", m_tets.size());
     printf("m_faces size is now %d\n", m_faces.size());
     calcBaryTransforms();
-    calcPointInvMasses();
+    calcPointMasses();
     srand(time(NULL));
     /*for(int i = 0; i < 1; i++) {
         auto it = m_faces.begin(); // get random pt
@@ -384,7 +392,7 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     }*/
     // balloon everything out a bit
     for(int i = 0; i < m_points.size(); i++) {
-        m_points[i] *= 1.2;
+        //m_points[i] *= 1.2;
     }
     calcNorms();
     printf("N surface faces: %d\n", m_faces.size());
@@ -408,7 +416,7 @@ TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique
     m_tets = copyFrom->m_tets;
     m_pToTMap = copyFrom->m_pToTMap;
     m_baryTransforms = copyFrom->m_baryTransforms;
-    m_pointInvMasses = copyFrom->m_pointInvMasses;
+    m_pointMasses = copyFrom->m_pointMasses;
     m_vels = copyFrom->m_vels;
 }
 
@@ -423,7 +431,7 @@ inline float randFloat() {
     return ((float)rand())/RAND_MAX*2-1;
 }
 
-void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
+void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
     // total force = gravity/other global forces + stress per element
     // stress = elastic stress + viscous stress
     // elastic stress = incompressibility * trace(strain) * ID_3x3 + 2*rigidity * strain
@@ -434,10 +442,10 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
     glm::mat3x3 id = glm::mat3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
     for(int i = 0; i < m_tets.size(); i++) {
         auto tet = m_tets[i];
-        auto p1 = m_points[tet.p1];
-        auto p2 = m_points[tet.p2];
-        auto p3 = m_points[tet.p3];
-        auto p4 = m_points[tet.p4];
+        auto p1 = points[tet.p1];
+        auto p2 = points[tet.p2];
+        auto p3 = points[tet.p3];
+        auto p4 = points[tet.p4];
         if(p1 == p2 || p1 == p3 || p1 == p4 || p2 == p3 || p2 == p4 || p3 == p4)
             continue;
 
@@ -451,10 +459,10 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
         glm::mat3x3 stress_elastic = /*m_material.incompressibility*/ settings.femIncompressibility * (strain[0][0] + strain[1][1] + strain[2][2]) * id
                 + 2 * settings.femRigidity /*m_material.rigidity*/ * strain;
 
-        auto v1 = m_vels[tet.p1];
-        auto v2 = m_vels[tet.p2];
-        auto v3 = m_vels[tet.p3];
-        auto v4 = m_vels[tet.p4];
+        auto v1 = vels[tet.p1];
+        auto v2 = vels[tet.p2];
+        auto v3 = vels[tet.p3];
+        auto v4 = vels[tet.p4];
 
         glm::mat3x3 V(v1 - v4, v2 - v4, v3 - v4);
 
@@ -469,11 +477,31 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
         glm::mat3x3 stress_total = stress_elastic + stress_viscous;
         glm::mat3x3 stress_t_ws = dx * stress_total;
         glm::vec3 cross234 = glm::cross(p4 - p2, p3 - p2);
-        float invvolume = 1.f;//glm::length(glm::dot(p1 - p2, cross234))*1000000; // 100000 is weight
-        glm::vec3 p1force = stress_t_ws * cross234 * invvolume;
-        glm::vec3 p2force = stress_t_ws * glm::cross(p4 - p3, p1 - p3) * invvolume;
-        glm::vec3 p3force = stress_t_ws * glm::cross(p4 - p1, p2 - p1) * invvolume;
-        glm::vec3 p4force = stress_t_ws * glm::cross(p2 - p1, p3 - p1) * invvolume;
+        glm::vec3 cross134 = glm::cross(p4 - p3, p1 - p3);
+        glm::vec3 cross124 = glm::cross(p4 - p1, p2 - p1);
+        glm::vec3 cross123 = glm::cross(p2 - p1, p3 - p1);
+        float epsilon = -1;
+        glm::vec3 p1force;
+        glm::vec3 p2force;
+        glm::vec3 p3force;
+        glm::vec3 p4force;
+        if(glm::length(cross234) > epsilon)
+            p1force = stress_t_ws * cross234;
+        if(glm::length(cross134) > epsilon)
+            p2force = stress_t_ws * cross134;
+        if(glm::length(cross124) > epsilon)
+            p3force = stress_t_ws * cross124;
+        if(glm::length(cross123) > epsilon)
+            p4force = stress_t_ws * cross123;
+        if(glm::length(p1force) > 1000 || glm::length(p2force) > 1000 || glm::length(p3force) > 1000 || glm::length(p4force) > 1000) {
+            /*printf("forces real bigg, ls:\n");
+            printf("%f, %f, %f at %f, %f, %f\n", p1force.x, p1force.y, p1force.z, (p1-p4).x, (p1-p4).y, (p1-p4).z);
+            printf("%f, %f, %f at %f, %f, %f\n", p2force.x, p2force.y, p2force.z, (p2-p4).x, (p2-p4).y, (p2-p4).z);
+            printf("%f, %f, %f at %f, %f, %f\n", p3force.x, p3force.y, p3force.z, (p3-p4).x, (p3-p4).y, (p3-p4).z);
+            printf("%f, %f, %f at %f, %f, %f\n", p4force.x, p4force.y, p4force.z, 0.f, 0.f, 0.f);
+            fflush(stdout);*/
+
+        }
         forcePerNode[tet.p1] -= p1force;
         forcePerNode[tet.p2] -= p2force;
         forcePerNode[tet.p3] -= p3force;
@@ -481,34 +509,146 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode) {
     }
 }
 
+bool detectInversion(std::vector<glm::vec3> points, std::vector<glm::vec3> tets) {
+
+}
+
+// number of newtons to apply when penetrated 1  meter^2
+#define PENALTY_ACCEL_K 50000.f
+
+void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
+    for(int i = 0; i < points.size(); i++) {
+        if(points[i].y < floorY) {
+            //m_vels[i].y = (floorY - m_points[i].y);
+            forcePerNode[i] += m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
+            //m_points[i].y = floorY;
+            //m_vels[i].y = 0;
+        }
+    }
+}
+
+void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
+    std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
+    // first add grav
+    for(int i = 0; i < m_points.size(); i++) {
+        forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
+    }
+    computeStressForces(forcePerNode, m_points, m_vels);
+    computeCollisionForces(forcePerNode, m_points, m_vels, -2);
+}
+
+void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
+    std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
+    // first add grav
+    for(int i = 0; i < points.size(); i++) {
+        forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
+    }
+    computeStressForces(forcePerNode, points, vels);
+    computeCollisionForces(forcePerNode, points, vels, -2);
+}
+
 void TetMesh::update(float timestep) {
     // step 1: get all forces.
-    std::vector<glm::vec3> forcePerNode;
-    forcePerNode.resize(m_points.size());
-    // Gravity:
-    //std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3(0, -9.81, 0));
-    // Stress (elastic + viscous):
-    computeStressForces(forcePerNode);
+#if 0
+    static glm::vec3 forcePerNode[m_points.size()];
+
+    computeAllForces(forcePerNode);
     // midpoint method:
     // copy old points and vels for final calc
-    std::vector<glm::vec3> pointsCopy(m_points), velsCopy(m_vels);
-    // then evaluate forces, and move everything forwards timestep/2
+
     for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forcePerNode[i] * m_pointInvMasses[i];
-        glm::vec3 velIncrement = accel * timestep / 2.f;
-        m_points[i] += m_vels[i] * timestep + velIncrement / 2.f;
+        glm::vec3 accel = forcePerNode[i] / m_pointMasses[i];
+        glm::vec3 velIncrement = accel * timestep;
+        m_points[i] += m_vels[i] * timestep + velIncrement;// / 2.f;
         m_vels[i] += velIncrement;
     }
-    // evaluate actual aceels at the midpoint
-    std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
-    computeStressForces(forcePerNode);
-    // now use the accels at midp as derivative of vel
+#else
+    std::vector<glm::vec3> forces(m_points.size()),
+            dxk1(m_points.size()),
+            dxk2(m_points.size()),
+            dxk3(m_points.size()),
+            dxk4(m_points.size()),
+            xnext(m_points.size()),
+            dvk1(m_points.size()),
+            dvk2(m_points.size()),
+            dvk3(m_points.size()),
+            dvk4(m_points.size()),
+            vnext(m_points.size());
+    computeAllForcesFrom(forces, m_points, m_vels);
     for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forcePerNode[i] * m_pointInvMasses[i];
-        glm::vec3 velIncrement = accel * timestep;
-        m_points[i] = pointsCopy[i] + m_vels[i] * timestep + velIncrement / 2.f;
-        m_vels[i] = velsCopy[i] + velIncrement;
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dxk1[i] = m_vels[i];
+        dvk1[i] = accel; // compute k1 + p
+        //vtemp[i] = m_vels[i] + velIncrement
+        xnext[i] = m_points[i] + dxk1[i] * 0.5f * timestep;
+        vnext[i] = m_vels[i] + dvk1[i] * 0.5f * timestep;
     }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dxk2[i] = vnext[i];
+        dvk2[i] = accel;
+        xnext[i] = m_points[i] + dxk2[i] * 0.5f * timestep;
+        vnext[i] = m_vels[i] + dvk2[i] * 0.5f * timestep;
+    }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dxk3[i] = vnext[i];
+        dvk3[i] = accel;
+        xnext[i] = m_points[i] + dxk3[i] * 1.0f * timestep;
+        vnext[i] = m_vels[i] + dvk3[i] * 1.0f * timestep;
+    }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dxk4[i] = vnext[i];
+        dvk4[i] = accel;
+    }
+    for(int i = 0; i < m_points.size(); i++) {
+        m_points[i] += timestep * (dxk1[i] + dxk4[i] + 2.f*(dxk2[i] + dxk3[i])) / 6.f;
+        m_vels[i] += timestep * (dvk1[i] + dvk4[i] + 2.f*(dvk2[i] + dvk3[i])) / 6.f;
+    }
+    /* computeAllForcesFrom(forces, m_points, m_vels);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dvk1[i] = accel; // compute k1 + p
+        vnext[i] = m_vels[i] + dvk1[i] * 0.5f * timestep;
+        dxk1[i] = vnext[i];
+        //vtemp[i] = m_vels[i] + velIncrement
+        xnext[i] = m_points[i] + dxk1[i] * 0.5f * timestep;
+
+    }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dvk2[i] = accel;
+        vnext[i] = m_vels[i] + dvk2[i] * 0.5f * timestep;
+        dxk2[i] = vnext[i];
+        xnext[i] = m_points[i] + dxk2[i] * 0.5f * timestep;
+
+    }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dvk3[i] = accel;
+        vnext[i] = m_vels[i] + dvk3[i] * 1.0f * timestep;
+        dxk3[i] = vnext[i];
+        xnext[i] = m_points[i] + dxk3[i] * 1.0f * timestep;
+
+    }
+    computeAllForcesFrom(forces, xnext, vnext);
+    for(int i = 0; i < m_points.size(); i++) {
+        glm::vec3 accel = forces[i] / m_pointMasses[i];
+        dvk4[i] = accel;
+        dxk4[i] = m_vels[i] + dvk4[i] * 1.0f * timestep;//vnext[i];
+    }
+    for(int i = 0; i < m_points.size(); i++) {
+        m_points[i] += timestep * (dxk1[i] + dxk4[i] + 2.f*(dxk2[i] + dxk3[i])) / 6.f;
+        m_vels[i] += timestep * (dvk1[i] + dvk4[i] + 2.f*(dvk2[i] + dvk3[i])) / 6.f;
+    }*/
+
+#endif
     calcNorms();
 }
 
@@ -550,10 +690,12 @@ void TetMesh::calcBaryTransforms() {
     }
 }
 
-void TetMesh::calcPointInvMasses() {
+#define MAT_DENSITY 1200
+
+void TetMesh::calcPointMasses() {
     // calculate masses for each point based on tet volumes
-    assert(m_pointInvMasses.size() == m_points.size());
-    std::fill(m_pointInvMasses.begin(), m_pointInvMasses.end(), 0);
+    assert(m_pointMasses.size() == m_points.size());
+    std::fill(m_pointMasses.begin(), m_pointMasses.end(), 0);
     float maxvol = -1, minvol = INFINITY;
     for(int i = 0; i < m_tets.size(); i++) {
         // let density = 4000 (i.e. water*4), then we can add tet vol to each node mass
@@ -562,7 +704,7 @@ void TetMesh::calcPointInvMasses() {
         auto p2 = m_points[tet.p2];
         auto p3 = m_points[tet.p3];
         auto p4 = m_points[tet.p4];
-        float volume = 1000*glm::length(glm::dot(p1 - p2, glm::cross(p4 - p2, p3 - p2)));
+        float volume = MAT_DENSITY*glm::length(glm::dot(p1 - p2, glm::cross(p4 - p2, p3 - p2)))/4;
         if(volume > maxvol)
             maxvol = volume;
         if(volume < minvol) {
@@ -570,20 +712,28 @@ void TetMesh::calcPointInvMasses() {
             printf("at min:\np1: %f,%f,%f\np2: %f,%f,%f\np3: %f,%f,%f\np4: %f,%f,%f\n",
                    p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z, p4.x, p4.y, p4.z);
         }
-        m_pointInvMasses[tet.p1] += volume;
-        m_pointInvMasses[tet.p2] += volume;
-        m_pointInvMasses[tet.p3] += volume;
-        m_pointInvMasses[tet.p4] += volume;
+        m_pointMasses[tet.p1] += volume;
+        m_pointMasses[tet.p2] += volume;
+        m_pointMasses[tet.p3] += volume;
+        m_pointMasses[tet.p4] += volume;
     }
     float sum = 0;
     float minm = INFINITY;
-    for(int i = 0; i < m_pointInvMasses.size(); i++) {
-        sum += m_pointInvMasses[i];
-        if(m_pointInvMasses[i] < minm)
-            minm = m_pointInvMasses[i];
-        m_pointInvMasses[i] = 1/m_pointInvMasses[i];
+    for(int i = 0; i < m_pointMasses.size(); i++) {
+        sum += m_pointMasses[i];
+        if(m_pointMasses[i] < minm)
+            minm = m_pointMasses[i];
+
     }
     printf("Total mass is %f, smallest mass is %f w/ inverse %f\nMax volume is %f, min volume is %f", sum, minm, 1.f/minm, maxvol, minvol);
+    /*float min_allowed_mass = sum / m_points.size() / 100;
+    for(int i = 0; i < m_pointMasses.size(); i++) {
+        if(m_pointMasses[i] < min_allowed_mass) {
+            sum += min_allowed_mass - m_pointMasses[i];
+            m_pointMasses[i] = min_allowed_mass;
+        }
+    }
+    printf("After culling low masses, new total mass is %f\n", sum);*/
 }
 
 bool setIfContains(std::unordered_map<glm::ivec3, bool, ivec3_hash>& map, glm::ivec3 vec) {

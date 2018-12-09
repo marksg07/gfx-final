@@ -112,7 +112,7 @@ HEADERS += \
 
 
 FORMS += ui/mainwindow.ui
-INCLUDEPATH += glm camera lib scenegraph ui glew-1.10.0/include tetgen
+INCLUDEPATH += glm camera lib scenegraph ui glew-1.10.0/include tetgen Eigen
 DEPENDPATH += glm camera lib scenegraph ui glew-1.10.0/include tetgen
 DEFINES += _USE_MATH_DEFINES
 DEFINES += TIXML_USE_STL

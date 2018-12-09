@@ -74,9 +74,12 @@ public:
 private:
     void calcFacesAndNorms();
     void calcNorms();
-    void computeStressForces(std::vector<glm::vec3>& forcePerNode);
+    void computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
+    void computeAllForces(std::vector<glm::vec3>& forcePerNode);
+    void computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
+    void computeCollisionForces(std::vector<glm::vec3>& forcePerNode,  const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY);
     void calcBaryTransforms();
-    void calcPointInvMasses();
+    void calcPointMasses();
     std::vector<glm::vec3> m_points;
     std::vector<glm::vec3> m_vels;
     std::vector<glm::vec3> m_norms;
@@ -87,7 +90,7 @@ private:
     object_node_t m_onode;
     mat_t m_material;
     // using lumped mass model, so rather than store an entire NxN matrix we will just store a vector
-    std::vector<float> m_pointInvMasses;
+    std::vector<float> m_pointMasses;
 
 };
 

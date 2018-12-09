@@ -48,6 +48,16 @@ public:
     void stopSimulation() {
         m_running = false;
     }
+    void stepSimulation(SupportCanvas3D *context) {
+        bool restore = m_running;
+        m_running = true;
+        render(context);
+        m_running = restore;
+    }
+
+    void restartSimulation() {
+
+    }
 
 private:
 

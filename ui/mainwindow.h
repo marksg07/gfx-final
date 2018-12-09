@@ -116,6 +116,8 @@ public slots:
     void on_femStop_clicked();
     //void on_femPull_clicked();
     //void on_femPush_clicked();
+    void on_femStepOnce_clicked();
+    void on_femRestart_clicked();
 };
 
 #endif // MAINWINDOW_H
