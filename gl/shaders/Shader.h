@@ -64,6 +64,7 @@ public:
     void setTexture(const std::string &name, const Texture2D &t);
     void setTexture(const std::string &name, const Texture3D &t);
     void setTexture(const std::string &name, const TextureCube &t);
+    void setTexture(const std::string &name, GLuint type, GLuint id);
 
     void bind();
     void unbind();

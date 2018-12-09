@@ -23,9 +23,9 @@ public:
     void drawDBG();
 
 
-    DepthTexture& texture()
+    GLuint textureID()
     {
-        return m_dfbo->texture();
+        return m_dfbo->textureID();
     }
 
     glm::mat4& mat()
@@ -38,13 +38,19 @@ public:
         return m_biasMVP;
     }
 
-    void bindTexture()
+    void prepareShader(CS123::GL::Shader* shader, std::string base, size_t i)
     {
-        m_dfbo->bindTexture();
+        if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
+            shader->setUniformArrayByIndex(base + "Mat", biasMVP(), i);
+            shader->setTexture(base + "Map[" + std::to_string(i) + "]",  GL_TEXTURE_2D, textureID());
+        }
     }
 
-    std::unique_ptr<DepthFBO> m_dfbo;
+    void renderDirectional();
 
+    void renderPoint();
+
+    std::unique_ptr<DepthFBO> m_dfbo;
 
 private:
 

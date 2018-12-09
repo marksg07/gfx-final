@@ -202,6 +202,17 @@ void Shader::setTexture(const std::string &name, const Texture3D &t) {}
 
 void Shader::setTexture(const std::string &name, const TextureCube &t) {}
 
+
+void Shader::setTexture(const std::string &name, GLuint type, GLuint id) {
+    GLint location = m_textureLocations[name];
+    GLint slot = m_textureSlots[location];
+
+    std::cout << name << " : " << slot << " : " << location << std::endl;
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glUniform1i(location, slot);
+    glBindTexture(type, id);
+}
+
 void Shader::attachShaders(const std::vector<GLuint> &shaders) {
     std::for_each(shaders.begin(), shaders.end(), [this](int s){ glAttachShader(m_programID, s); });
 }

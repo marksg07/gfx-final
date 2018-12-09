@@ -105,12 +105,6 @@ void SceneviewScene::render(SupportCanvas3D *context) {
         }
     }
 
-    // For now just get first directional light
-    if (light == -1)
-    {
-        return;
-
-    }
     // shadow mapping end
 
     for(auto& m : m_shadowMaps)
@@ -127,10 +121,13 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     glCullFace(GL_BACK);
 
 
-    std::shared_ptr<ShadowMap> m = m_shadowMaps[light];
     if (settings.useKDTree)
     {
-        m->drawDBG();
+        if (light != -1)
+        {
+            std::shared_ptr<ShadowMap> m = m_shadowMaps[light];
+            m->drawDBG();
+        }
 
         return;
 
@@ -140,8 +137,9 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     for(size_t i = 0; i < m_lights.size(); i++)
     {
-        m_phongShader->setUniformArrayByIndex("shadowMat", m_shadowMaps[i]->biasMVP(), i);
-        m_phongShader->setTexture("shadowMap[" + std::to_string(i) + "]", m_shadowMaps[i]->texture());
+        /*m_phongShader->setUniformArrayByIndex("shadowMat", m_shadowMaps[i]->biasMVP(), i);
+        m_phongShader->setTexture("shadowMap[" + std::to_string(i) + "]",  m_shadowMaps[i]->texture());*/
+        m_shadowMaps[i]->prepareShader(m_phongShader.get(), "shadow", i);
     }
 
     setSceneUniforms(context);

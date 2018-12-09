@@ -171,7 +171,8 @@ HEADERS += \
     scenegraph/ShadowMap.h \
     gl/shaders/ShadowShader.h \
     gl/textures/DepthTexture.h \
-    gl/datatype/DepthFBO.h
+    gl/datatype/DepthFBO.h \
+    gl/textures/DepthCubeTexture.h
 
 
 FORMS += ui/mainwindow.ui

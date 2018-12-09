@@ -9,9 +9,11 @@ public:
     DepthTexture(size_t width, size_t height);
 
 
-private:
+protected:
 
-    size_t m_width, m_height;
+    DepthTexture() {
+
+    }
 };
 
 #endif // DEPTHTEXTURE_H

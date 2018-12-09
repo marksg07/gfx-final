@@ -577,7 +577,7 @@ qmake_all: FORCE
 
 dist: 
 	@test -d .tmp/CS1231.0.0 || mkdir -p .tmp/CS1231.0.0
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/CS1231.0.0/ && $(COPY_FILE) --parents resources.qrc .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.h brush/ConstantBrush.h brush/LinearBrush.h brush/QuadraticBrush.h brush/SmudgeBrush.h camera/Camera.h camera/OrbitingCamera.h camera/CamtransCamera.h camera/QuaternionCamera.h scenegraph/Scene.h scenegraph/OpenGLScene.h scenegraph/ShapesScene.h scenegraph/SceneviewScene.h scenegraph/RayScene.h ui/Canvas2D.h ui/SupportCanvas2D.h ui/SupportCanvas3D.h ui/Settings.h ui/mainwindow.h ui/Databinding.h ui_mainwindow.h gl/shaders/Shader.h gl/GLDebug.h gl/shaders/ShaderAttribLocations.h gl/datatype/VBOAttribMarker.h gl/datatype/VBO.h gl/datatype/IBO.h gl/datatype/VAO.h gl/datatype/FBO.h gl/textures/Texture.h gl/textures/Texture2D.h gl/textures/TextureParameters.h gl/textures/TextureParametersBuilder.h gl/textures/RenderBuffer.h gl/textures/DepthBuffer.h gl/shaders/CS123Shader.h gl/util/FullScreenQuad.h lib/BGRA.h lib/CS123XmlSceneParser.h lib/CS123SceneData.h lib/CS123ISceneParser.h lib/ResourceLoader.h glew-1.10.0/include/GL/glew.h brush/BrushManager.h brush/SnakeBrush.h brush/Snake.h brush/FoodBrush.h scenegraph/shapes/GLShape.h scenegraph/shapes/GLCube.h scenegraph/shapes/GLSphere.h scenegraph/shapes/GLVertex.h scenegraph/shapes/GLTriangle.h scenegraph/shapes/GLCone.h scenegraph/shapes/GLCylinder.h scenegraph/shapes/Utils.h scenegraph/Utils.h scenegraph/shapes/GLTorus.h scenegraph/shapes/GLCap.h scenegraph/shapes/GLTransformable.h filter/Filter.h filter/FilterEdge.h filter/FilterBlur.h filter/FilterUtils.h filter/Kernel.h filter/FilterScale.h filter/FilterRotate.h filter/FilterSharpen.h filter/FilterUnsharp.h scenegraph/Ray.h scenegraph/IlluminateData.h scenegraph/IntersectionManager.h scenegraph/ThreadPool.h scenegraph/KDTree.h scenegraph/ShadowMap.h gl/shaders/ShadowShader.h gl/textures/DepthTexture.h gl/datatype/DepthFBO.h .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.cpp brush/ConstantBrush.cpp brush/LinearBrush.cpp brush/QuadraticBrush.cpp brush/SmudgeBrush.cpp camera/OrbitingCamera.cpp camera/CamtransCamera.cpp camera/QuaternionCamera.cpp scenegraph/Scene.cpp scenegraph/OpenGLScene.cpp scenegraph/ShapesScene.cpp scenegraph/SceneviewScene.cpp scenegraph/RayScene.cpp ui/Canvas2D.cpp ui/SupportCanvas2D.cpp ui/SupportCanvas3D.cpp ui/Settings.cpp ui/mainwindow.cpp ui/Databinding.cpp lib/BGRA.cpp lib/CS123XmlSceneParser.cpp lib/ResourceLoader.cpp gl/shaders/Shader.cpp gl/GLDebug.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/IBO.cpp gl/datatype/FBO.cpp gl/textures/Texture.cpp gl/textures/Texture2D.cpp gl/textures/TextureParameters.cpp gl/textures/TextureParametersBuilder.cpp gl/textures/RenderBuffer.cpp gl/textures/DepthBuffer.cpp gl/shaders/CS123Shader.cpp gl/util/FullScreenQuad.cpp main.cpp glew-1.10.0/src/glew.c brush/BrushManager.cpp brush/SnakeBrush.cpp brush/Snake.cpp brush/FoodBrush.cpp gl/datatype/VAO.cpp gl/datatype/VBO.cpp scenegraph/shapes/GLShape.cpp scenegraph/shapes/GLCube.cpp scenegraph/shapes/GLSphere.cpp scenegraph/shapes/GLVertex.cpp scenegraph/shapes/GLTriangle.cpp scenegraph/shapes/GLCone.cpp scenegraph/shapes/GLCylinder.cpp scenegraph/Utils.cpp scenegraph/shapes/GLTorus.cpp scenegraph/shapes/GLCap.cpp scenegraph/shapes/GLTransformable.cpp filter/Filter.cpp filter/FilterEdge.cpp filter/FilterBlur.cpp filter/Kernel.cpp filter/FilterUtils.cpp filter/FilterScale.cpp filter/FilterRotate.cpp filter/FilterSharpen.cpp filter/FilterUnsharp.cpp scenegraph/IlluminateData.cpp scenegraph/IntersectionManager.cpp scenegraph/KDTree.cpp scenegraph/ShadowMap.cpp gl/shaders/ShadowShader.cpp gl/textures/DepthTexture.cpp gl/datatype/DepthFBO.cpp .tmp/CS1231.0.0/ && $(COPY_FILE) --parents ui/mainwindow.ui .tmp/CS1231.0.0/ && (cd `dirname .tmp/CS1231.0.0` && $(TAR) CS1231.0.0.tar CS1231.0.0 && $(COMPRESS) CS1231.0.0.tar) && $(MOVE) `dirname .tmp/CS1231.0.0`/CS1231.0.0.tar.gz . && $(DEL_FILE) -r .tmp/CS1231.0.0
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/CS1231.0.0/ && $(COPY_FILE) --parents resources.qrc .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.h brush/ConstantBrush.h brush/LinearBrush.h brush/QuadraticBrush.h brush/SmudgeBrush.h camera/Camera.h camera/OrbitingCamera.h camera/CamtransCamera.h camera/QuaternionCamera.h scenegraph/Scene.h scenegraph/OpenGLScene.h scenegraph/ShapesScene.h scenegraph/SceneviewScene.h scenegraph/RayScene.h ui/Canvas2D.h ui/SupportCanvas2D.h ui/SupportCanvas3D.h ui/Settings.h ui/mainwindow.h ui/Databinding.h ui_mainwindow.h gl/shaders/Shader.h gl/GLDebug.h gl/shaders/ShaderAttribLocations.h gl/datatype/VBOAttribMarker.h gl/datatype/VBO.h gl/datatype/IBO.h gl/datatype/VAO.h gl/datatype/FBO.h gl/textures/Texture.h gl/textures/Texture2D.h gl/textures/TextureParameters.h gl/textures/TextureParametersBuilder.h gl/textures/RenderBuffer.h gl/textures/DepthBuffer.h gl/shaders/CS123Shader.h gl/util/FullScreenQuad.h lib/BGRA.h lib/CS123XmlSceneParser.h lib/CS123SceneData.h lib/CS123ISceneParser.h lib/ResourceLoader.h glew-1.10.0/include/GL/glew.h brush/BrushManager.h brush/SnakeBrush.h brush/Snake.h brush/FoodBrush.h scenegraph/shapes/GLShape.h scenegraph/shapes/GLCube.h scenegraph/shapes/GLSphere.h scenegraph/shapes/GLVertex.h scenegraph/shapes/GLTriangle.h scenegraph/shapes/GLCone.h scenegraph/shapes/GLCylinder.h scenegraph/shapes/Utils.h scenegraph/Utils.h scenegraph/shapes/GLTorus.h scenegraph/shapes/GLCap.h scenegraph/shapes/GLTransformable.h filter/Filter.h filter/FilterEdge.h filter/FilterBlur.h filter/FilterUtils.h filter/Kernel.h filter/FilterScale.h filter/FilterRotate.h filter/FilterSharpen.h filter/FilterUnsharp.h scenegraph/Ray.h scenegraph/IlluminateData.h scenegraph/IntersectionManager.h scenegraph/ThreadPool.h scenegraph/KDTree.h scenegraph/ShadowMap.h gl/shaders/ShadowShader.h gl/textures/DepthTexture.h gl/datatype/DepthFBO.h gl/textures/DepthCubeTexture.h .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.cpp brush/ConstantBrush.cpp brush/LinearBrush.cpp brush/QuadraticBrush.cpp brush/SmudgeBrush.cpp camera/OrbitingCamera.cpp camera/CamtransCamera.cpp camera/QuaternionCamera.cpp scenegraph/Scene.cpp scenegraph/OpenGLScene.cpp scenegraph/ShapesScene.cpp scenegraph/SceneviewScene.cpp scenegraph/RayScene.cpp ui/Canvas2D.cpp ui/SupportCanvas2D.cpp ui/SupportCanvas3D.cpp ui/Settings.cpp ui/mainwindow.cpp ui/Databinding.cpp lib/BGRA.cpp lib/CS123XmlSceneParser.cpp lib/ResourceLoader.cpp gl/shaders/Shader.cpp gl/GLDebug.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/IBO.cpp gl/datatype/FBO.cpp gl/textures/Texture.cpp gl/textures/Texture2D.cpp gl/textures/TextureParameters.cpp gl/textures/TextureParametersBuilder.cpp gl/textures/RenderBuffer.cpp gl/textures/DepthBuffer.cpp gl/shaders/CS123Shader.cpp gl/util/FullScreenQuad.cpp main.cpp glew-1.10.0/src/glew.c brush/BrushManager.cpp brush/SnakeBrush.cpp brush/Snake.cpp brush/FoodBrush.cpp gl/datatype/VAO.cpp gl/datatype/VBO.cpp scenegraph/shapes/GLShape.cpp scenegraph/shapes/GLCube.cpp scenegraph/shapes/GLSphere.cpp scenegraph/shapes/GLVertex.cpp scenegraph/shapes/GLTriangle.cpp scenegraph/shapes/GLCone.cpp scenegraph/shapes/GLCylinder.cpp scenegraph/Utils.cpp scenegraph/shapes/GLTorus.cpp scenegraph/shapes/GLCap.cpp scenegraph/shapes/GLTransformable.cpp filter/Filter.cpp filter/FilterEdge.cpp filter/FilterBlur.cpp filter/Kernel.cpp filter/FilterUtils.cpp filter/FilterScale.cpp filter/FilterRotate.cpp filter/FilterSharpen.cpp filter/FilterUnsharp.cpp scenegraph/IlluminateData.cpp scenegraph/IntersectionManager.cpp scenegraph/KDTree.cpp scenegraph/ShadowMap.cpp gl/shaders/ShadowShader.cpp gl/textures/DepthTexture.cpp gl/datatype/DepthFBO.cpp .tmp/CS1231.0.0/ && $(COPY_FILE) --parents ui/mainwindow.ui .tmp/CS1231.0.0/ && (cd `dirname .tmp/CS1231.0.0` && $(TAR) CS1231.0.0.tar CS1231.0.0 && $(COMPRESS) CS1231.0.0.tar) && $(MOVE) `dirname .tmp/CS1231.0.0`/CS1231.0.0.tar.gz . && $(DEL_FILE) -r .tmp/CS1231.0.0
 
 
 clean:compiler_clean 
@@ -602,25 +602,25 @@ compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: resources.qrc \
-		shaders/normals/normalsArrow.frag \
-		shaders/texture.frag \
+		shaders/normals/normals.vert \
+		shaders/shadow_map.vert \
+		shaders/shadow.vert \
 		shaders/wireframe/wireframe.frag \
-		shaders/test/shader.frag \
+		shaders/test/shader.vert \
+		shaders/texture.frag \
+		shaders/fullscreenquad/fullscreenquad.frag \
 		shaders/shader.vert \
 		shaders/normals/normals.frag \
-		shaders/normals/normals.gsh \
-		shaders/shadow_map.vert \
-		shaders/normals/normalsArrow.gsh \
-		shaders/fullscreenquad/fullscreenquad.vert \
-		shaders/shadow.frag \
-		shaders/wireframe/wireframe.vert \
-		shaders/normals/normalsArrow.vert \
-		shaders/test/shader.vert \
-		shaders/shader.frag \
-		shaders/normals/normals.vert \
 		shaders/shadow_map.frag \
-		shaders/fullscreenquad/fullscreenquad.frag \
-		shaders/shadow.vert
+		shaders/normals/normalsArrow.vert \
+		shaders/shadow.frag \
+		shaders/normals/normals.gsh \
+		shaders/test/shader.frag \
+		shaders/wireframe/wireframe.vert \
+		shaders/shader.frag \
+		shaders/normals/normalsArrow.frag \
+		shaders/fullscreenquad/fullscreenquad.vert \
+		shaders/normals/normalsArrow.gsh
 	/home/ethan/Qt5.2.0/5.2.0/gcc_64/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_Canvas2D.cpp moc_SupportCanvas2D.cpp moc_SupportCanvas3D.cpp moc_mainwindow.cpp moc_Databinding.cpp moc_Snake.cpp
@@ -10021,12 +10021,12 @@ DepthTexture.o: gl/textures/DepthTexture.cpp gl/textures/DepthTexture.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DepthTexture.o gl/textures/DepthTexture.cpp
 
 DepthFBO.o: gl/datatype/DepthFBO.cpp gl/datatype/DepthFBO.h \
-		gl/textures/DepthTexture.h \
-		gl/textures/Texture2D.h \
 		gl/textures/Texture.h \
 		glew-1.10.0/include/GL/glew.h \
 		gl/textures/TextureParametersBuilder.h \
-		gl/textures/TextureParameters.h
+		gl/textures/TextureParameters.h \
+		gl/textures/DepthTexture.h \
+		gl/textures/Texture2D.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DepthFBO.o gl/datatype/DepthFBO.cpp
 
 qrc_resources.o: qrc_resources.cpp 

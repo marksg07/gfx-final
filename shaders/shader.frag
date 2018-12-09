@@ -8,6 +8,7 @@ const int MAX_LIGHTS = 10;
 
 uniform sampler2D shadowMap[MAX_LIGHTS];
 uniform mat4 shadowMat[MAX_LIGHTS];
+uniform samplerCube shadowCubeMap[MAX_LIGHTS];
 // Light data
 
 uniform bool useLighting;
@@ -48,6 +49,12 @@ out vec4 fragColor;
 uniform int numLights = 0;
 float bias = 0.005;
 
+vec2 poissonDisk[4] = vec2[](
+    vec2( -0.94201624, -0.39906216 ),
+    vec2( 0.94558609, -0.76890725 ),
+    vec2( -0.094184101, -0.92938870 ),
+    vec2( 0.34495938, 0.29387760 ));
+
 void main(){
 
     /*vec4 shadowCoord = shadowMat * m * obj_position;
@@ -79,7 +86,7 @@ void main(){
 
         float visibility = 1.0;
         for (int i = 0; i <= numLights; i++) {
-
+            visibility = 1.0;
 
 
             vec4 vertexToLight = vec4(0);
@@ -96,10 +103,15 @@ void main(){
 
                 bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0, 0.01);
                 vec4 shadowCoord = shadowMat[i] * m * obj_position;
-                if (texture(shadowMap[i], shadowCoord.xy).r < shadowCoord.z - bias) {
+                /*if (texture(shadowMap[i], shadowCoord.xy).r < shadowCoord.z - bias) {
                     visibility = 0.5;
                 } else {
                      visibility = 1.0;
+                }*/
+                for (int s = 0; s < 4; s++){
+                    if (texture(shadowMap[i], shadowCoord.xy + poissonDisk[s] / 700.0).r < shadowCoord.z - bias) {
+                        visibility -= 0.2;
+                    }
                 }
 
             }
