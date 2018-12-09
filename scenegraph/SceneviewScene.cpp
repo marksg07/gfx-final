@@ -31,6 +31,7 @@ SceneviewScene::SceneviewScene(size_t w, size_t h)
     loadNormalsShader();
     loadNormalsArrowShader();
     loadShadowShader();
+    loadShadowPointShader();
     loadShadowMapShader();
 
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CUBE] = std::make_shared<GLCube>(2, 2, 255.0);
@@ -58,6 +59,12 @@ void SceneviewScene::loadShadowShader() {
     std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.vert");
     std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.frag");
     m_shadowShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
+void SceneviewScene::loadShadowPointShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.frag");
+    m_shadowPointShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
 }
 
 
@@ -224,7 +231,7 @@ void SceneviewScene::setupLevelOfDetail()
 
     for(auto l : m_lights)
     {
-        m_shadowMaps.push_back(std::make_shared<ShadowMap>(m_shadowShader, m_shadowMapShader, l, this));
+        m_shadowMaps.push_back(std::make_shared<ShadowMap>(m_shadowShader, m_shadowPointShader, m_shadowMapShader, l, this));
     }
 }
 

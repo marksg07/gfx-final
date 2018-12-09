@@ -101,7 +101,7 @@ void main(){
                 vertexToLight = normalize(v * vec4(-lightDirections[i], 0));
 
 
-                bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0, 0.01);
+                bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0.0, 0.01);
                 vec4 shadowCoord = shadowMat[i] * m * obj_position;
                 /*if (texture(shadowMap[i], shadowCoord.xy).r < shadowCoord.z - bias) {
                     visibility = 0.5;

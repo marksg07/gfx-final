@@ -5,7 +5,7 @@ QT += opengl xml widgets
 TARGET = CS123
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++14 -Ofast -march=native
+QMAKE_CXXFLAGS += -std=c++14 -march=native
 CONFIG += c++14
 
 unix:!macx {
@@ -209,7 +209,9 @@ OTHER_FILES += shaders/shader.frag \
     shaders/shadow.frag \
     shaders/shadow.vert \
     shaders/shadow_map.frag \
-    shaders/shadow_map.vert
+    shaders/shadow_map.vert \
+    shaders/shadowPoint.frag \
+    shaders/shadowPoint.vert
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2

@@ -19,5 +19,7 @@
         <file alias="shadow.frag">shaders/shadow.frag</file>
         <file alias="shadow_map.vert">shaders/shadow_map.vert</file>
         <file alias="shadow_map.frag">shaders/shadow_map.frag</file>
+        <file alias="shadowPoint.vert">shaders/shadowPoint.vert</file>
+        <file alias="shadowPoint.frag">shaders/shadowPoint.frag</file>
     </qresource>
 </RCC>

@@ -60,6 +60,7 @@ private:
     void loadFragShader();
     void loadShadowShader();
     void loadShadowMapShader();
+    void loadShadowPointShader();;
 
      void addLight(const CS123SceneLightData &sceneLight) override
      {
@@ -84,6 +85,7 @@ private:
     std::unique_ptr<CS123::GL::Shader> m_normalsArrowShader;
     std::unique_ptr<CS123::GL::Shader> m_textureShader;
     std::shared_ptr<CS123::GL::Shader> m_shadowShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowPointShader;
 
 
     std::shared_ptr<CS123::GL::Shader> m_shadowMapShader;

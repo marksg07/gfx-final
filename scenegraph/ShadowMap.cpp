@@ -1,11 +1,33 @@
 #include "ShadowMap.h"
 #include "Settings.h"
 #include "gl/textures/DepthCubeTexture.h"
+#include <QApplication>
 
 std::unique_ptr<CS123::GL::FullScreenQuad> ShadowMap::fsq = nullptr;
 
-ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<CS123::GL::Shader> dbg_shader, CS123SceneLightData light, SceneviewScene* scene)
-    : m_shadowShader(shader), m_dbgShader(dbg_shader), m_light(light), m_scene(scene)
+
+// From: http://ogldev.atspace.co.uk/www/tutorial43/tutorial43.html
+struct CameraDirection
+{
+    GLenum CubemapFace;
+    glm::vec3 Target;
+    glm::vec3 Up;
+};
+
+CameraDirection cameraDirections[6] =
+{
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_X, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) },
+    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
+    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f) }
+};
+
+
+
+ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<CS123::GL::Shader> shadowPointShader, std::shared_ptr<CS123::GL::Shader> dbg_shader, CS123SceneLightData light, SceneviewScene* scene)
+    : m_shadowShader(shader), m_shadowPointShader(shadowPointShader), m_dbgShader(dbg_shader), m_light(light), m_scene(scene)
 {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -31,7 +53,6 @@ ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<
     } else if (m_light.type == LightType::LIGHT_POINT) {
         tex = std::make_shared<DepthCubeTexture>(m_width, m_height);
     }
-
 
     m_dfbo->attachTexture(tex);
 
@@ -66,12 +87,12 @@ std::vector<glm::vec3> getFrustumPoints(glm::mat4 projection)
     return corners;
 }
 
-void ShadowMap::updateMat(Camera* camera)
+void ShadowMap::getMaxMin(Camera* camera, glm::vec3& min, glm::vec3& max)
 {
     std::vector<glm::vec3> corners = getFrustumPoints(camera->getProjectionMatrix());
 
-    glm::vec3 min = corners[0];
-    glm::vec3 max = corners[7];
+    min = corners[0];
+    max = corners[7];
 
     for(auto c : corners)
     {
@@ -97,6 +118,12 @@ void ShadowMap::updateMat(Camera* camera)
 
     max /= 2.0f;
     min /= 2.0f;
+}
+
+void ShadowMap::updateMat(Camera* camera)
+{
+    glm::vec3 min, max;
+    getMaxMin(camera, min, max);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -110,8 +137,10 @@ void ShadowMap::updateMat(Camera* camera)
     m_biasMVP = m_biasMatrix * m_MVP;
 }
 
-void ShadowMap::renderDirectional()
+void ShadowMap::renderDirectional(Camera* camera)
 {
+    updateMat(camera);
+
     m_shadowShader->bind();
 
     m_shadowShader->setUniform("shadowMat", m_MVP);
@@ -125,29 +154,35 @@ void ShadowMap::renderDirectional()
     m_shadowShader->unbind();
 }
 
-void ShadowMap::renderPoint()
+void ShadowMap::renderPoint(Camera* camera)
 {
-    m_shadowShader->bind();
+    float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
 
-    m_shadowShader->setUniform("shadowMat", m_MVP);
+    // camera FOV?
+    glm::mat4 p = glm::perspective(settings.cameraFov, ratio, settings.cameraNear, settings.cameraFar);
+
+    m_shadowPointShader->bind();
 
     m_dfbo->bind();
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_FRONT);
-    m_scene->renderGeometryShadow();
+
+    for(int i = 0; i < 6; i++) {
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glCullFace(GL_FRONT);
+        m_scene->renderGeometryShadow();
+    }
+
+
     m_dfbo->unbind();
 
-    m_shadowShader->unbind();
+    m_shadowPointShader->unbind();
 }
 
 void ShadowMap::update(Camera* camera)
 {
-    updateMat(camera);
-
     if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
-        renderDirectional();
+        renderDirectional(camera);
     } else if (m_light.type == LightType::LIGHT_POINT) {
-        renderPoint();
+        //renderPoint(camera);
     }
 }
 

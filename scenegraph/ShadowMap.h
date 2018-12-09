@@ -15,8 +15,7 @@ class SceneviewScene;
 class ShadowMap
 {
 public:
-    ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<CS123::GL::Shader> dbg_shader, CS123SceneLightData light, SceneviewScene* scene);
-
+    ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<CS123::GL::Shader> pointShader, std::shared_ptr<CS123::GL::Shader> dbg_shader, CS123SceneLightData light, SceneviewScene* scene);
     void updateMat(Camera* camera);
     void update(Camera* camera);
 
@@ -46,9 +45,11 @@ public:
         }
     }
 
-    void renderDirectional();
+    void renderDirectional(Camera* camera);
 
-    void renderPoint();
+    void renderPoint(Camera* camera);
+
+    void getMaxMin(Camera* camera, glm::vec3& min, glm::vec3& max);
 
     std::unique_ptr<DepthFBO> m_dfbo;
 
@@ -63,6 +64,7 @@ private:
     CS123SceneLightData m_light;
     SceneviewScene* m_scene;
     std::shared_ptr<CS123::GL::Shader> m_shadowShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowPointShader;
     std::shared_ptr<CS123::GL::Shader> m_dbgShader;
 
 

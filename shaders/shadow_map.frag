@@ -6,5 +6,5 @@ uniform sampler2D shadowMap;
 void main()
 {
     float depth_value = texture(shadowMap, uv).r;
-    gl_FragColor = vec4(vec3(depth_value), 1.0); // orthographic
+    fragColor = vec4(vec3(depth_value), 1.0); // orthographic
 }
