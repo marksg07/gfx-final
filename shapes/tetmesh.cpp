@@ -431,6 +431,15 @@ inline float randFloat() {
     return ((float)rand())/RAND_MAX*2-1;
 }
 
+bool tetInverted(const std::vector<glm::vec3> &points, tet_t tet) {
+    auto p1 = points[tet.p1];
+    auto p2 = points[tet.p2];
+    auto p3 = points[tet.p3];
+    auto p4 = points[tet.p4];
+    glm::vec3 cross123 = glm::cross(p2 - p1, p3 - p1);
+    return glm::dot(cross123, p4 - p1) < 0;
+}
+
 void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
     // total force = gravity/other global forces + stress per element
     // stress = elastic stress + viscous stress
@@ -442,6 +451,10 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     glm::mat3x3 id = glm::mat3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
     for(int i = 0; i < m_tets.size(); i++) {
         auto tet = m_tets[i];
+        if(tetInverted(points, tet)) {
+            printf("Inverted tet (#%d) found!\n", i);
+            fflush(stdout);
+        }
         auto p1 = points[tet.p1];
         auto p2 = points[tet.p2];
         auto p3 = points[tet.p3];
@@ -450,15 +463,16 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
             continue;
 
         glm::mat3x3 P(p1 - p4, p2 - p4, p3 - p4);
-
         glm::mat3x3 dx = P * m_baryTransforms[i];
-        glm::mat3x3 dxT = glm::transpose(dx);
+        glm::mat3x3 dxT = dx;
+        dx = glm::transpose(dx);
+        glm::mat3x3 strain = dxT * dx - id; //- id;
 
-        glm::mat3x3 strain = dxT * dx - id;
-
-        glm::mat3x3 stress_elastic = /*m_material.incompressibility*/ settings.femIncompressibility * (strain[0][0] + strain[1][1] + strain[2][2]) * id
-                + 2 * settings.femRigidity /*m_material.rigidity*/ * strain;
-
+        //glm::mat3x3 stress_elastic = /*m_material.incompressibility*/ settings.femIncompressibility * (strain[0][0] + strain[1][1] + strain[2][2]) * id
+        //        + 2 * settings.femRigidity /*m_material.rigidity*/ * strain;
+        glm::mat3x3 trace_matrix = (strain[0][0] + strain[1][1] + strain[2][2]) * id;
+        glm::mat3x3 stress_elastic = 2 * settings.femRigidity * (strain - 1/3.f * trace_matrix)
+                + settings.femIncompressibility * trace_matrix;
         auto v1 = vels[tet.p1];
         auto v2 = vels[tet.p2];
         auto v3 = vels[tet.p3];
@@ -467,13 +481,16 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
         glm::mat3x3 V(v1 - v4, v2 - v4, v3 - v4);
 
         glm::mat3x3 dv = V * m_baryTransforms[i];
-        glm::mat3x3 dvT = glm::transpose(dv);
+        glm::mat3x3 dvT = dv;
+        dv = glm::transpose(dv);
 
         glm::mat3x3 strain_rate = dxT * dv + dvT * dx;
 
-        glm::mat3x3 stress_viscous = /*m_material.viscous1*/ settings.femBulkViscosity * (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id
-                + 2 * settings.femShearViscosity /*m_material.viscous2*/ * strain_rate;
-
+        //glm::mat3x3 stress_viscous = /*m_material.viscous1*/ settings.femBulkViscosity * (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id
+        //        + 2 * settings.femShearViscosity /*m_material.viscous2*/ * strain_rate;
+        glm::mat3x3 sr_trace_matrix = (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id;
+        glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * (strain_rate - 1/3.f * sr_trace_matrix)
+                + settings.femIncompressibility * sr_trace_matrix;
         glm::mat3x3 stress_total = stress_elastic + stress_viscous;
         glm::mat3x3 stress_t_ws = dx * stress_total;
         glm::vec3 cross234 = glm::cross(p4 - p2, p3 - p2);
@@ -519,8 +536,11 @@ bool detectInversion(std::vector<glm::vec3> points, std::vector<glm::vec3> tets)
 void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
     for(int i = 0; i < points.size(); i++) {
         if(points[i].y < floorY) {
+            glm::vec3 force_normal = m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
             //m_vels[i].y = (floorY - m_points[i].y);
-            forcePerNode[i] += m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
+            //float friction_mag = glm::length(0.1 * m_pointMasses[i]) * 0.4;
+
+            forcePerNode[i] += force_normal; /* + friction_mag * glm::normalize(-(forcePerNode[i] - m_pointMasses[i] * glm::vec3(0, -0.1, 0)));*/
             //m_points[i].y = floorY;
             //m_vels[i].y = 0;
         }
