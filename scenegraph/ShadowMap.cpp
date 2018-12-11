@@ -182,10 +182,9 @@ void ShadowMap::renderPoint(Camera* camera)
     glViewport(0, 0, 1024, 1024);
     glBindFramebuffer(GL_FRAMEBUFFER, m_dfbo->depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
-glCullFace(GL_NONE);
 
 
-m_shadowPointShader->bind();
+    m_shadowPointShader->bind();
     for (unsigned int i = 0; i < 6; ++i)
         m_shadowPointShader->setUniformArrayByIndex("shadowMatrices", shadowTransforms[i], i);
 

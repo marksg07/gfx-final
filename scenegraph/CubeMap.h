@@ -12,7 +12,9 @@ class CubeMap
 public:
     CubeMap(std::string path, std::string ext);
 
+
     void draw();
+    void draw(GLuint handle);
 
     ~CubeMap()
     {

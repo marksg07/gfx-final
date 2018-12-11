@@ -94,9 +94,14 @@ CubeMap::CubeMap(std::string path, std::string ext)
 
 void CubeMap::draw()
 {
+    draw(m_handle);
+}
+
+void CubeMap::draw(GLuint handle)
+{
     glBindVertexArray(skyboxVAO);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, m_handle);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
     glDrawArrays(GL_TRIANGLES, 0, 36);
     glBindVertexArray(0);
     glDepthFunc(GL_LESS);

@@ -104,7 +104,7 @@ void SupportCanvas3D::initializeOpenGLSettings() {
 
 void SupportCanvas3D::initializeScenes() {
     m_sceneviewScene = std::make_unique<SceneviewScene>(width(), height());
-    m_shapesScene = std::make_unique<ShapesScene>(width(), height());
+    //m_shapesScene = std::make_unique<ShapesScene>(width(), height());
 }
 
 void SupportCanvas3D::paintGL() {
@@ -115,7 +115,9 @@ void SupportCanvas3D::paintGL() {
     float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
     glViewport(0, 0, width() * ratio, height() * ratio);
     getCamera()->setAspectRatio(static_cast<float>(width()) / static_cast<float>(height()));
-    m_currentScene->render(this);
+    if (m_currentScene != nullptr) {
+        m_currentScene->render(this);
+    }
 }
 
 void SupportCanvas3D::settingsChanged() {
@@ -145,7 +147,7 @@ void SupportCanvas3D::loadSceneviewSceneFromParser(CS123XmlSceneParser &parser) 
     Scene::parse(m_sceneviewScene.get(), &parser);
     m_settingsDirty = true;
 
-    update();
+    settingsChanged();
 }
 
 void SupportCanvas3D::setSceneToSceneview() {
@@ -154,8 +156,8 @@ void SupportCanvas3D::setSceneToSceneview() {
 }
 
 void SupportCanvas3D::setSceneToShapes() {
-    assert(m_shapesScene.get());
-    m_currentScene = m_shapesScene.get();
+    //assert(m_shapesScene.get());
+    //m_currentScene = m_shapesScene.get();
 }
 
 void SupportCanvas3D::copyPixels(int width, int height, BGRA *data) {

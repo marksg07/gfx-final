@@ -72,7 +72,7 @@ float ShadowCalculation(vec3 fragToLight, int i)
     // display closestDepth as debug (to visualize depth cubemap)
     // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
 
-    return closestDepth == 0.0 ? 1.0 : 0.0;
+    return shadow;
 }
 
 
@@ -116,11 +116,11 @@ void main(){
             if (lightTypes[i] == 0) {
                 vertexToLight = normalize(v * vec4(lightPositions[i], 1) - position_cameraSpace);
 
-                /*float shadow = ShadowCalculation(vertexToLight.xyz, i);
+                float shadow = ShadowCalculation(((m * obj_position).xyz - lightPositions[i]), i);
                 if (shadow == 1.0)
                 {
-                    visibility = 0.0;
-                }*/
+                    visibility = 0.1;
+                }
 
             } else if (lightTypes[i] == 1) {
                 // Dir Light
