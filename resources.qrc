@@ -21,5 +21,16 @@
         <file alias="shadow_map.frag">shaders/shadow_map.frag</file>
         <file alias="shadowPoint.vert">shaders/shadowPoint.vert</file>
         <file alias="shadowPoint.frag">shaders/shadowPoint.frag</file>
+        <file alias="shadowPoint.gsh">shaders/shadowPoint.gsh</file>
+        <file alias="skybox.frag">shaders/skybox.frag</file>
+        <file alias="skybox.vert">shaders/skybox.vert</file>
+    </qresource>
+    <qresource prefix="/resources">
+        <file alias="skybox/back.jpg">resources/skybox/back.jpg</file>
+        <file alias="skybox/bottom.jpg">resources/skybox/bottom.jpg</file>
+        <file alias="skybox/front.jpg">resources/skybox/front.jpg</file>
+        <file alias="skybox/left.jpg">resources/skybox/left.jpg</file>
+        <file alias="skybox/right.jpg">resources/skybox/right.jpg</file>
+        <file alias="skybox/top.jpg">resources/skybox/top.jpg</file>
     </qresource>
 </RCC>

@@ -41,7 +41,6 @@ public:
         return m_depthTexture->id();
     }
 
-protected:
     DepthFBO();
 
     size_t m_width, m_height;
@@ -49,6 +48,8 @@ protected:
     GLuint m_handle;
 
     std::shared_ptr<CS123::GL::Texture> m_depthTexture;
+
+    GLuint depthMapFBO, depthCubemap;
 };
 
 #endif // DEPTHFBO_H

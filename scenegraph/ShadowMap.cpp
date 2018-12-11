@@ -38,11 +38,11 @@ ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<
     }
 
     m_biasMatrix = glm::mat4(
-        0.5, 0.0, 0.0, 0.0,
-        0.0, 0.5, 0.0, 0.0,
-        0.0, 0.0, 0.5, 0.0,
-        0.5, 0.5, 0.5, 1.0
-    );
+                0.5, 0.0, 0.0, 0.0,
+                0.0, 0.5, 0.0, 0.0,
+                0.0, 0.0, 0.5, 0.0,
+                0.5, 0.5, 0.5, 1.0
+                );
 
 
     m_dfbo = std::make_unique<DepthFBO>(m_width, m_height);
@@ -50,11 +50,11 @@ ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<
     std::shared_ptr<DepthTexture> tex;
     if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
         tex = std::make_shared<DepthTexture>(m_width, m_height);
+        m_dfbo->attachTexture(tex);
     } else if (m_light.type == LightType::LIGHT_POINT) {
         tex = std::make_shared<DepthCubeTexture>(m_width, m_height);
     }
 
-    m_dfbo->attachTexture(tex);
 
 }
 
@@ -148,7 +148,7 @@ void ShadowMap::renderDirectional(Camera* camera)
     m_dfbo->bind();
     glClear(GL_DEPTH_BUFFER_BIT);
     glCullFace(GL_FRONT);
-    m_scene->renderGeometryShadow();
+    m_scene->renderGeometry(m_shadowShader.get());
     m_dfbo->unbind();
 
     m_shadowShader->unbind();
@@ -161,18 +161,41 @@ void ShadowMap::renderPoint(Camera* camera)
     // camera FOV?
     glm::mat4 p = glm::perspective(settings.cameraFov, ratio, settings.cameraNear, settings.cameraFar);
 
-    m_shadowPointShader->bind();
-
-    m_dfbo->bind();
-
-    for(int i = 0; i < 6; i++) {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glCullFace(GL_FRONT);
-        m_scene->renderGeometryShadow();
-    }
+    //m_dfbo->bind();
 
 
-    m_dfbo->unbind();
+    float near_plane = 1.0f;
+    float far_plane  = 25.0f;
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)1024 / (float)1024, near_plane, far_plane);
+    std::vector<glm::mat4> shadowTransforms;
+
+    glm::vec3 lightPos = m_light.pos.xyz();
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f)));
+
+    // 1. render scene to depth cubemap
+    // --------------------------------
+    glViewport(0, 0, 1024, 1024);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_dfbo->depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+glCullFace(GL_NONE);
+
+
+m_shadowPointShader->bind();
+    for (unsigned int i = 0; i < 6; ++i)
+        m_shadowPointShader->setUniformArrayByIndex("shadowMatrices", shadowTransforms[i], i);
+
+    //simpleDepthShader.setFloat("far_plane", far_plane);
+    m_shadowPointShader->setUniform("lightPos", lightPos);
+    m_scene->renderGeometry(m_shadowPointShader.get());
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+    //m_dfbo->unbind();
 
     m_shadowPointShader->unbind();
 }
@@ -182,7 +205,7 @@ void ShadowMap::update(Camera* camera)
     if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
         renderDirectional(camera);
     } else if (m_light.type == LightType::LIGHT_POINT) {
-        //renderPoint(camera);
+        renderPoint(camera);
     }
 }
 

@@ -33,6 +33,7 @@ SceneviewScene::SceneviewScene(size_t w, size_t h)
     loadShadowShader();
     loadShadowPointShader();
     loadShadowMapShader();
+    loadSkyboxShader();
 
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CUBE] = std::make_shared<GLCube>(2, 2, 255.0);
     m_dfl_shapes[PrimitiveType::PRIMITIVE_CONE] = std::make_shared<GLCone>(10, 10, 255.0);
@@ -41,6 +42,8 @@ SceneviewScene::SceneviewScene(size_t w, size_t h)
 
     // Has broken normals...
     m_dfl_shapes[PrimitiveType::PRIMITIVE_TORUS] = std::make_shared<GLTorus>(20, 20, 255.0);
+
+    m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
 
 
 }
@@ -61,10 +64,17 @@ void SceneviewScene::loadShadowShader() {
     m_shadowShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
 }
 
+void SceneviewScene::loadSkyboxShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/skybox.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/skybox.frag");
+    m_skyboxShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
 void SceneviewScene::loadShadowPointShader() {
     std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.vert");
+    std::string geometrySource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.gsh");
     std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.frag");
-    m_shadowPointShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+    m_shadowPointShader = std::make_shared<CS123::GL::Shader>(vertexSource, geometrySource, fragmentSource);
 }
 
 
@@ -98,7 +108,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     setClearColor();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+#if 1
     // shadow mapping
 
     int light = -1;
@@ -155,6 +165,20 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
 
     m_phongShader->unbind();
+#endif
+
+
+    glDepthFunc(GL_LEQUAL);
+    m_skyboxShader->bind();
+
+    m_skyboxShader->setUniform("v", glm::mat4(glm::mat3(context->getCamera()->getViewMatrix())));
+    m_skyboxShader->setUniform("p", context->getCamera()->getProjectionMatrix());
+    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_skybox->textureId());
+
+    m_skybox->draw();
+
+    m_skyboxShader->unbind();
+    glDepthFunc(GL_LESS);
 
 }
 
@@ -162,7 +186,7 @@ void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {
     Camera *camera = context->getCamera();
     m_phongShader->setUniform("useLighting", settings.useLighting);
     //m_phongShader->setUniform("useArrowOffsets", false);
-    m_phongShader->setUniform("p" , camera->getProjectionMatrix());
+    m_phongShader->setUniform("p", camera->getProjectionMatrix());
     m_phongShader->setUniform("v", camera->getViewMatrix());
 }
 
@@ -258,7 +282,7 @@ void SceneviewScene::setLights()
 }
 
 #include "shapes/GLSphere.h"
-void SceneviewScene::renderGeometryShadow() {
+void SceneviewScene::renderGeometry(CS123::GL::Shader* shader) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     // TODO: [SCENEVIEW] Fill this in...
     // You shouldn't need to write *any* OpenGL in this class!
@@ -273,7 +297,7 @@ void SceneviewScene::renderGeometryShadow() {
         //std::cout << glm::to_string(r.transform) << std::endl;
         //std::cout << "ayy: "<< glm::to_string(glm::mat4(1.0f)) << std::endl;
 
-        m_shadowShader->setUniform("m", r.transform);
+        shader->setUniform("m", r.transform);
         if (m_shapes.count(r.primitive.type))
         {
             m_shapes[r.primitive.type]->draw();

@@ -11,6 +11,8 @@ uniform mat4 shadowMat[MAX_LIGHTS];
 uniform samplerCube shadowCubeMap[MAX_LIGHTS];
 // Light data
 
+out vec4 fragColor;
+
 uniform bool useLighting;
 
 uniform int useTexture = 0;
@@ -42,7 +44,6 @@ vec3 o_spec;
 
 uniform sampler2D tex;
 in vec2 texc;
-out vec4 fragColor;
 
 //uniform sampler2D tex;
 
@@ -54,6 +55,26 @@ vec2 poissonDisk[4] = vec2[](
     vec2( 0.94558609, -0.76890725 ),
     vec2( -0.094184101, -0.92938870 ),
     vec2( 0.34495938, 0.29387760 ));
+
+float ShadowCalculation(vec3 fragToLight, int i)
+{
+    // ise the fragment to light vector to sample from the depth map
+    float far_plane = 25.0f;
+
+    float closestDepth = texture(shadowCubeMap[i], fragToLight).r;
+    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
+    closestDepth *= far_plane;
+    // now get current linear depth as the length between the fragment and light position
+    float currentDepth = length(fragToLight);
+    // test for shadows
+    float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
+    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
+    // display closestDepth as debug (to visualize depth cubemap)
+    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
+
+    return closestDepth == 0.0 ? 1.0 : 0.0;
+}
+
 
 void main(){
 
@@ -94,6 +115,12 @@ void main(){
             // Point Light
             if (lightTypes[i] == 0) {
                 vertexToLight = normalize(v * vec4(lightPositions[i], 1) - position_cameraSpace);
+
+                /*float shadow = ShadowCalculation(vertexToLight.xyz, i);
+                if (shadow == 1.0)
+                {
+                    visibility = 0.0;
+                }*/
 
             } else if (lightTypes[i] == 1) {
                 // Dir Light

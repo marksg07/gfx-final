@@ -11,6 +11,7 @@
 #include "gl/datatype/FBO.h"
 #include "gl/util/FullScreenQuad.h"
 #include "ShadowMap.h"
+#include "CubeMap.h"
 
 class ShadowMap;
 
@@ -49,7 +50,7 @@ public:
     void setSelection(int x, int y);
 
 
-    void renderGeometryShadow();
+    void renderGeometry(CS123::GL::Shader* shader);
 
 private:
 
@@ -60,7 +61,8 @@ private:
     void loadFragShader();
     void loadShadowShader();
     void loadShadowMapShader();
-    void loadShadowPointShader();;
+    void loadShadowPointShader();
+    void loadSkyboxShader();
 
      void addLight(const CS123SceneLightData &sceneLight) override
      {
@@ -86,6 +88,7 @@ private:
     std::unique_ptr<CS123::GL::Shader> m_textureShader;
     std::shared_ptr<CS123::GL::Shader> m_shadowShader;
     std::shared_ptr<CS123::GL::Shader> m_shadowPointShader;
+    std::shared_ptr<CS123::GL::Shader> m_skyboxShader;
 
 
     std::shared_ptr<CS123::GL::Shader> m_shadowMapShader;
@@ -96,6 +99,8 @@ private:
     std::map<PrimitiveType, std::shared_ptr<GLShape>> m_shapes;
 
     std::map<PrimitiveType, std::shared_ptr<GLShape>> m_dfl_shapes;
+
+    std::unique_ptr<CubeMap> m_skybox = nullptr;
 
     size_t m_width, m_height;
 };

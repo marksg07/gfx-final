@@ -91,7 +91,8 @@ SOURCES += \
     scenegraph/ShadowMap.cpp \
     gl/shaders/ShadowShader.cpp \
     gl/textures/DepthTexture.cpp \
-    gl/datatype/DepthFBO.cpp
+    gl/datatype/DepthFBO.cpp \
+    scenegraph/CubeMap.cpp
 
 
 HEADERS += \
@@ -172,7 +173,8 @@ HEADERS += \
     gl/shaders/ShadowShader.h \
     gl/textures/DepthTexture.h \
     gl/datatype/DepthFBO.h \
-    gl/textures/DepthCubeTexture.h
+    gl/textures/DepthCubeTexture.h \
+    scenegraph/CubeMap.h
 
 
 FORMS += ui/mainwindow.ui
@@ -211,7 +213,10 @@ OTHER_FILES += shaders/shader.frag \
     shaders/shadow_map.frag \
     shaders/shadow_map.vert \
     shaders/shadowPoint.frag \
-    shaders/shadowPoint.vert
+    shaders/shadowPoint.vert \
+    shaders/shadowPoint.gsh \
+    shaders/skybox.vert \
+    shaders/skybox.frag
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2
