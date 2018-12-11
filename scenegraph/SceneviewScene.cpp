@@ -46,6 +46,7 @@ SceneviewScene::SceneviewScene(size_t w, size_t h)
     m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
 
 
+    m_first = true;
 }
 
 SceneviewScene::~SceneviewScene()
@@ -111,18 +112,6 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 #if 1
     // shadow mapping
 
-    int light = -1;
-    for (int i = 0; i < m_lights.size(); i++)
-    {
-        CS123SceneLightData* l = &m_lights[i];
-        if (l->type == LightType::LIGHT_DIRECTIONAL)
-        {
-            light = i;
-            break;
-        }
-    }
-
-    // shadow mapping end
 
     for(auto& m : m_shadowMaps)
     {
@@ -137,25 +126,10 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     glCullFace(GL_BACK);
 
-
-    if (settings.useKDTree)
-    {
-        if (light != -1)
-        {
-            std::shared_ptr<ShadowMap> m = m_shadowMaps[light];
-            m->drawDBG();
-        }
-
-        return;
-
-    }
-
     m_phongShader->bind();
 
     for(size_t i = 0; i < m_lights.size(); i++)
     {
-        /*m_phongShader->setUniformArrayByIndex("shadowMat", m_shadowMaps[i]->biasMVP(), i);
-        m_phongShader->setTexture("shadowMap[" + std::to_string(i) + "]",  m_shadowMaps[i]->texture());*/
         m_shadowMaps[i]->prepareShader(m_phongShader.get(), "shadow", i);
     }
 
@@ -180,6 +154,11 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_skyboxShader->unbind();
     glDepthFunc(GL_LESS);
 
+    // render twice on first pass lmao
+    if (m_first) {
+        m_first = false;
+        context->settingsChanged();
+    }
 }
 
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {

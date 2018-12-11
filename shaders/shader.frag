@@ -110,6 +110,10 @@ void main(){
             visibility = 1.0;
 
 
+            if (lightColors[i] == vec3(0)) {
+                continue;
+            }
+
             vec4 vertexToLight = vec4(0);
 
             // Point Light

@@ -54,6 +54,8 @@ public:
 
 private:
 
+    bool m_first;
+
     void loadPhongShader();
     void loadWireframeShader();
     void loadNormalsShader();

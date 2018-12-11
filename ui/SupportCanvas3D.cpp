@@ -107,10 +107,11 @@ void SupportCanvas3D::initializeScenes() {
     //m_shapesScene = std::make_unique<ShapesScene>(width(), height());
 }
 
+QTime m_time;
+
 void SupportCanvas3D::paintGL() {
-    if (m_settingsDirty) {
-        setSceneFromSettings();
-    }
+    m_time.start();
+    setSceneFromSettings();
 
     float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
     glViewport(0, 0, width() * ratio, height() * ratio);
@@ -118,6 +119,7 @@ void SupportCanvas3D::paintGL() {
     if (m_currentScene != nullptr) {
         m_currentScene->render(this);
     }
+    printf("FPS is %f\n", 1 / (float(m_time.elapsed()) / 1000.0f));
 }
 
 void SupportCanvas3D::settingsChanged() {
