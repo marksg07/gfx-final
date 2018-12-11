@@ -82,6 +82,8 @@ private:
     std::unordered_map<std::string, std::unique_ptr<TetMesh>> m_meshTemplateCache;
     std::vector<TetMesh> m_meshes;
     bool m_running;
+    bool m_ready;
+    std::mutex initializationMutex;
 };
 
 #endif // SCENEVIEWSCENE_H

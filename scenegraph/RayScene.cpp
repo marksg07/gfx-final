@@ -41,7 +41,7 @@ RayScene::RayScene(Scene &scene) :
         // get bounds of scene first
     glm::vec3 minbound(INFINITY, INFINITY, INFINITY);
     glm::vec3 maxbound(-INFINITY, -INFINITY, -INFINITY);
-    for(int i = 0; i < m_nodes.size(); i++) {
+    for(unsigned long i = 0; i < m_nodes.size(); i++) {
         minbound.x = glm::min(minbound.x, m_nodes[i].minbound.x);
         minbound.y = glm::min(minbound.y, m_nodes[i].minbound.y);
         minbound.z = glm::min(minbound.z, m_nodes[i].minbound.z);
@@ -89,7 +89,7 @@ glm::vec3 gouraudIlluminate(glm::vec4 point, glm::vec4 normal, CS123SceneMateria
                        CS123SceneGlobalData global, std::vector<CS123SceneLightData> lights) {
 
     glm::vec4 rgba = mat.cAmbient;
-    for(int i = 0; i < lights.size(); i++) {
+    for(unsigned long i = 0; i < lights.size(); i++) {
         CS123SceneLightData *light = &lights[i];
         glm::vec4 pToL;
         if(light->type == LightType::LIGHT_POINT && settings.usePointLights)
@@ -291,7 +291,7 @@ glm::vec3 fullIlluminate(glm::vec4 point, glm::vec4 normal, glm::vec3 tangent, g
         glm::vec4 texCol = sampleBicubic(image, texcor.x, texcor.y, mat.textureMap.repeatU, mat.textureMap.repeatV);
         diffuse_blended = mat.cDiffuse * (1 - mat.blend) + texCol * mat.blend;
     }
-    for(int i = 0; i < lights.size(); i++) {
+    for(unsigned long i = 0; i < lights.size(); i++) {
         CS123SceneLightData *light = &lights[i];
         glm::vec4 pToL;
         float attenuation;
@@ -426,7 +426,7 @@ glm::vec3 RayScene::colorFromRay(RayScene *scene, glm::vec4 P_ws, glm::vec4 d_ws
     glm::vec4 os_intersect;
     if(!settings.useKDTree) {
         //printf("itering thru obj, n_objs = %d\n", m_nodes.size());
-        for(int i = 0; i < scene->m_nodes.size(); i++) {
+        for(unsigned long i = 0; i < scene->m_nodes.size(); i++) {
             const object_node_t *obj = &scene->m_nodes[i];
             glm::vec4 eye_os = obj->invtrans * P_ws;
             glm::vec4 v_dir_os = obj->invtrans * d_ws;
@@ -470,7 +470,7 @@ glm::vec3 RayScene::colorFromRay(RayScene *scene, glm::vec4 P_ws, glm::vec4 d_ws
 double RayScene::rayIntersect(RayScene *scene, glm::vec4 P_ws, glm::vec4 d_ws) {
     double smallestT = INFINITY;
     if(!settings.useKDTree) {
-        for(int i = 0; i < scene->m_nodes.size(); i++) {
+        for(unsigned long i = 0; i < scene->m_nodes.size(); i++) {
             const object_node_t *obj = &scene->m_nodes[i];
             glm::vec4 eye_os = obj->invtrans * P_ws;
             glm::vec4 v_dir_os = obj->invtrans * d_ws;

@@ -51,13 +51,13 @@ glm::mat4x4 getRealMat(CS123SceneTransformation tr) {
 
 void Scene::traverseAndAddPrimitives(Scene *scene, CS123SceneNode *root, glm::mat4x4 trans) {
     //printf("new traversal node reached, root = %p\n", root);
-    for(int i = 0; i < root->transformations.size(); i++) {
+    for(unsigned long i = 0; i < root->transformations.size(); i++) {
         trans *= getRealMat(*root->transformations[i]);
     }
-    for(int i = 0; i < root->primitives.size(); i++) {
+    for(unsigned long i = 0; i < root->primitives.size(); i++) {
         scene->addPrimitive(*root->primitives[i], trans);
     }
-    for(int i = 0; i < root->children.size(); i++) {
+    for(unsigned long i = 0; i < root->children.size(); i++) {
         traverseAndAddPrimitives(scene, root->children[i], trans);
     }
 }

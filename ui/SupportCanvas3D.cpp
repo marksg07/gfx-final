@@ -20,8 +20,10 @@ SupportCanvas3D::SupportCanvas3D(QGLFormat format, QWidget *parent) : QGLWidget(
     m_settingsDirty(true),
     m_defaultPerspectiveCamera(new CamtransCamera()),
     m_defaultOrbitingCamera(new OrbitingCamera()),
-    m_currentScene(nullptr)
+    m_currentScene(nullptr),
+    m_updateTimer(this)
 {
+    connect(&m_updateTimer, SIGNAL(timeout()), this, SLOT(updateScreenConcurrent()));
 }
 
 SupportCanvas3D::~SupportCanvas3D()
@@ -50,10 +52,12 @@ CamtransCamera *SupportCanvas3D::getCamtransCamera() {
     return m_defaultPerspectiveCamera.get();
 }
 
-void SupportCanvas3D::doUpdateLoop() {
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(updateScreenConcurrent()));
-    timer->start(1000/60);
+void SupportCanvas3D::startUpdateLoop() {
+    m_updateTimer.start(1000/60);
+}
+
+void SupportCanvas3D::stopUpdateLoop() {
+    m_updateTimer.stop();
 }
 
 void SupportCanvas3D::initializeGL() {
@@ -71,8 +75,7 @@ void SupportCanvas3D::initializeGL() {
     initializeScenes();
     setSceneFromSettings();
 
-    settingsChanged();
-    doUpdateLoop();
+    settingsChanged();   
 
 }
 
@@ -140,10 +143,12 @@ void SupportCanvas3D::setSceneFromSettings() {
 }
 
 void SupportCanvas3D::loadSceneviewSceneFromParser(CS123XmlSceneParser &parser) {
+    stopUpdateLoop();
     m_sceneviewScene = std::make_unique<SceneviewScene>();
     Scene::parse(m_sceneviewScene.get(), &parser);
     m_settingsDirty = true;
     m_sceneviewScene->parsingDone();
+    startUpdateLoop();
 }
 
 void SupportCanvas3D::setSceneToSceneview() {

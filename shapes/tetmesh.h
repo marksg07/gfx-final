@@ -74,17 +74,21 @@ public:
 private:
     void calcFacesAndNorms();
     void calcNorms();
+    void computeFracture(const tet_t& tet, glm::mat3x3 stress);
     void computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
     void computeAllForces(std::vector<glm::vec3>& forcePerNode);
     void computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
     void computeCollisionForces(std::vector<glm::vec3>& forcePerNode,  const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY);
     void calcBaryTransforms();
     void calcPointMasses();
+
+    int addNewPoint();
     std::vector<glm::vec3> m_points;
+    std::vector<bool> m_isCrackTip;
     std::vector<glm::vec3> m_vels;
     std::vector<glm::vec3> m_norms;
     std::vector<tet_t> m_tets;
-    std::unordered_map<int, std::vector<int>> m_pToTMap;
+    std::vector<std::vector<int>> m_pToTMap;
     std::unordered_map<glm::ivec3, bool, ivec3_hash> m_faces;
     std::vector<glm::mat3x3> m_baryTransforms;
     object_node_t m_onode;

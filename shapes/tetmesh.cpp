@@ -10,8 +10,10 @@
 #include <glm/gtx/random.hpp>
 #include <unordered_set>
 #include "Settings.h"
-//#include <Eigen/Dense>
-
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+#include "timing.h"
+#include "tetmeshparser.h"
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
@@ -24,81 +26,11 @@ std::size_t hash_ivec3_fn(const glm::ivec3& v) {
     return hasher(v.x, v.y, v.z);
 
 }
-
-inline double get_time(void) {
-  struct timeval t;
-  gettimeofday(&t, NULL);
-  return (t.tv_usec * 0.000001 + t.tv_sec);
-}
-
+namespace {
 inline glm::vec3 getPoint(const tetgenio& t, int i) {
     assert(i < t.numberofpoints);
     return glm::vec3(t.pointlist[3 * i], t.pointlist[3 * i + 1], t.pointlist[3 * i + 2]);
 }
-
-std::vector<glm::vec3> computeNorms(const tetgenio& t) {
-    // This should happen pre-getTets
-    printf("Computing per-point norms\n");
-    std::vector<glm::vec3> norms;
-    norms.resize(t.numberofpoints);
-    // we go through each tetrahedron and for each triangle, add its contribution (surface area of triangle) to constituent points
-    for(int i = 0; i < t.numberoftetrahedra; i++) {
-        // tris (oriented s.t. pointing outwards) are:
-        // 124, 234, 314, 132
-        // to get cross of tri XYZ, we do Z-Y x Y-X
-        // by crossing w/o normalizing, we weight by SA
-        int p1idx = t.tetrahedronlist[i * 4];
-        int p2idx = t.tetrahedronlist[i * 4 + 1];
-        int p3idx = t.tetrahedronlist[i * 4 + 2];
-        int p4idx = t.tetrahedronlist[i * 4 + 3];
-        printf("npoints: %d, pidxs: %d, %d, %d, %d\n", t.numberofpoints, p1idx, p2idx, p3idx, p4idx);
-        fflush(stdout);
-        auto p1 = getPoint(t, p1idx);
-        auto p2 = getPoint(t, p2idx);
-        auto p3 = getPoint(t, p3idx);
-        auto p4 = getPoint(t, p4idx);
-
-        auto orientedSA124 = glm::cross(p4 - p2, p1 - p2);
-        auto orientedSA234 = glm::cross(p4 - p3, p2 - p3);
-        auto orientedSA314 = glm::cross(p4 - p1, p3 - p1);
-        auto orientedSA132 = glm::cross(p2 - p3, p1 - p3);
-
-        norms[p1idx] += orientedSA124 + orientedSA314 + orientedSA132;
-        norms[p2idx] += orientedSA124 + orientedSA234 + orientedSA132;
-        norms[p3idx] += orientedSA234 + orientedSA314 + orientedSA132;
-        norms[p4idx] += orientedSA124 + orientedSA234 + orientedSA314;
-    }
-    // XXX For now, we don't normalize norms b/c GL is fine with it
-    return norms;
-}
-
-/*std::vector<Tetrahedron> getTets(const tetgenio& t, std::vector<glm::vec3> norms) {
-    // assume has loaded nodes and eles
-    printf("Getting tets from tetgenio\n");
-    printf("%d tetrahedra\n", t.numberoftetrahedra);
-    assert(t.numberofcorners == 4);
-    std::vector<Tetrahedron> tets;
-    tets.reserve(t.numberoftetrahedra);
-    for(int i = 0; i < t.numberoftetrahedra; i++) {
-        int p1idx = t.tetrahedronlist[i * 4];
-        int p2idx = t.tetrahedronlist[i * 4 + 1];
-        int p3idx = t.tetrahedronlist[i * 4 + 2];
-        int p4idx = t.tetrahedronlist[i * 4 + 3];
-
-        auto p1 = getPoint(t, p1idx);
-        auto p2 = getPoint(t, p2idx);
-        auto p3 = getPoint(t, p3idx);
-        auto p4 = getPoint(t, p4idx);
-
-        auto n1 = norms[p1idx];
-        auto n2 = norms[p2idx];
-        auto n3 = norms[p3idx];
-        auto n4 = norms[p4idx];
-
-        tets.push_back(Tetrahedron(p1, p2, p3, p4, n1, n2, n3, n4));
-    }
-    return tets;
-}*/
 
 std::vector<tet_t> getTets(const tetgenio& t) {
     std::vector<tet_t> ret;
@@ -113,21 +45,6 @@ std::vector<tet_t> getTets(const tetgenio& t) {
     return ret;
 }
 
-std::unordered_map<int, std::vector<int>> tetsTouchingPoint(const std::vector<tet_t>& tets) {
-    std::unordered_map<int, std::vector<int>> pToTMap;
-    for(int i = 0; i < tets.size(); i++) {
-        tet_t tet = tets[i];
-        for(int j = 0; j < 4; j++) {
-            int pidx = tet[j];
-            if(pToTMap.count(pidx) == 0) {
-                pToTMap[pidx] = std::vector<int>();
-            }
-            pToTMap[pidx].push_back(i);
-        }
-    }
-    return pToTMap;
-}
-
 std::vector<glm::vec3> getPoints(const tetgenio& t) {
     std::vector<glm::vec3> ret;
     ret.reserve(t.numberofpoints);
@@ -137,273 +54,52 @@ std::vector<glm::vec3> getPoints(const tetgenio& t) {
     return ret;
 }
 
-bool strIsIntable(const std::string& str) {
-    if(str.length() == 0)
-        return false;
-    if(str[0] == '-' || str[0] == '+') {
-        return strIsIntable(str.substr(1));
-    }
-    return str.find_first_not_of("0123456789") == std::string::npos; // i.e. no non-digits
-}
-
-int getFirstIntFromVTN(const std::string& vtn) {
-    if(strIsIntable(vtn))
-        return std::stoi(vtn);
-    else {
-        std::string v = vtn.substr(0, vtn.find('/'));
-        assert(strIsIntable(v));
-        return std::stoi(v);
-    }
-}
-
-void convertObjFile(std::string objfilename, tetgenio *out) {
-    std::ifstream infile(objfilename);
-    std::string line;
-    std::vector<REAL> vertCoords;
-    std::vector<int> faceIdxs;
-    while(std::getline(infile, line)) {
-        line.erase(0, line.find_first_not_of(" \n\r\t"));
-        if(line[0] == '#')
-            continue;
-        else if(line[0] == 'v') {
-            if(line[1] == 'n' || line[1] == 't' || line[1] == 'p') {
-                // texcors, normals, or param space all ignored
-                continue;
-            }
-            // now we make a stream of floats representing the x,y,z[,w] and read from it
-            std::istringstream strm(&line[1]);
-            float x = 99, y = 99, z = 99;
-            if(!(strm >> x >> y >> z)) {
-                printf("Attempted to read line:\n%s\nAs string stream of x,y,z, but failed.\n", line.data());
-                printf("Read: %f, %f, %f\n", x, y, z);
-                continue;
-            }
-            vertCoords.push_back(x);
-            vertCoords.push_back(y);
-            vertCoords.push_back(z);
-        }
-        else if(line[0] == 'f') {
-            // we make a stream of ints representing the triangle corners
-            std::istringstream strm(&line[1]);
-            std::string v1, v2, v3, tmp;
-            int i1, i2, i3;
-            if(!(strm >> v1 >> v2 >> v3)) {
-                printf("Attempted to read line:\n%s\nAs string stream of v1,v2,v3, but failed.\n", line.data());
-                continue;
-            }
-            if(strm >> tmp) {
-                // > 3 verts
-                printf("Line parsed as:\n%s\nHas >3 vertices listed. Ignoring addl verts.\n", line.data());
-            }
-            i1 = getFirstIntFromVTN(v1);
-            i2 = getFirstIntFromVTN(v2);
-            i3 = getFirstIntFromVTN(v3);
-            // -1 because .obj indexes from 1
-            faceIdxs.push_back(i1 - 1);
-            faceIdxs.push_back(i2 - 1);
-            faceIdxs.push_back(i3 - 1);
+std::vector<std::vector<int>> tetsTouchingPoint(const std::vector<tet_t>& tets, int psize) {
+    std::vector<std::vector<int>> pToTMap;
+    pToTMap.resize(psize);
+    for(long unsigned int i = 0;i < tets.size(); i++) {
+        tet_t tet = tets[i];
+        for(int j = 0; j < 4; j++) {
+            int pidx = tet[j];
+            pToTMap[pidx].push_back(i);
         }
     }
-    // XXX The reason we are not directly initializing a tetgenio object is because there's a bunch of random stuff that has to be initialized.
-    std::ofstream ofile("tmp.smesh");
-    ofile << "# tmp.smesh autogenerated by convertObjFile(" << objfilename << ")" << std::endl;
-    // number nodes, number dims (always 3), number attributes (currently 0), has boundary marker (no)
-    ofile << vertCoords.size() / 3 << " " << 3 << " " << 0 << " " << 0 << std::endl;
-    ofile << std::endl;
-    for(int i = 0; i < vertCoords.size() / 3; i++) {
-        ofile << i << " ";
-        ofile << vertCoords[i * 3] << " ";
-        ofile << vertCoords[i * 3 + 1] << " ";
-        ofile << vertCoords[i * 3 + 2];
-        ofile << std::endl;
-    }
-    ofile << std::endl;
-    // number facets, has boundary marker (no)
-    ofile << faceIdxs.size() / 3 << " " << 0 << std::endl;
-    ofile << std::endl;
-    for(int i = 0; i < faceIdxs.size() / 3; i++) {
-        ofile << 3 << " ";
-        ofile << faceIdxs[i * 3] << " ";
-        ofile << faceIdxs[i * 3 + 1] << " ";
-        ofile << faceIdxs[i * 3 + 2];
-        ofile << std::endl;
-    }
-    ofile << std::endl;
-    // number holes (0)
-    ofile << 0 << std::endl;
-    printf("About to tgio.load_poly...\n");
-    fflush(stdout);
-    out->load_poly("tmp");
-    printf("Done with tgio.load_poly.\n");
-    fflush(stdout);
+    return pToTMap;
+}
 }
 
-void convertMeshFile(std::string meshFileName, tetgenio *out) {
-    std::ifstream in(meshFileName);
-    std::string line;
-    std::vector<float> vertCoords;
-    std::vector<int> tetCoords;
-    while(std::getline(in, line)) {
-        if(line[0] == 'v') {
-            std::istringstream strm(&line[1]);
-            float x = 99, y = 99, z = 99;
-            if(!(strm >> x >> y >> z)) {
-                printf("Attempted to read line:\n%s\nAs string stream of x,y,z, but failed.\n", line.data());
-                printf("Read: %f, %f, %f\n", x, y, z);
-                continue;
-            }
-            vertCoords.push_back(x);
-            vertCoords.push_back(y);
-            vertCoords.push_back(z);
-        }
-        else if(line[0] == 't') {
-            std::istringstream strm(&line[1]);
-            int x = 99, y = 99, z = 99, w = 99;;
-            if(!(strm >> x >> y >> z >> w)) {
-                printf("Attempted to read line:\n%s\nAs string stream of x,y,z,w ints but failed.\n", line.data());
-                printf("Read: %d, %d, %d, %d\n", x, y, z, w);
-                continue;
-            }
-            tetCoords.push_back(x);
-            tetCoords.push_back(y);
-            tetCoords.push_back(z);
-            tetCoords.push_back(w);
-        }
-    }
-    std::ofstream ofile("tmp.ele");
-    // first ele. Line is num tets, num verts/shape (4 for tet), 0 boundary
-    ofile << tetCoords.size()/4 << " " << 4 << " " << 0;
-    ofile << std::endl;
-    for(int i = 0; i < tetCoords.size()/4; i++) {
-        ofile << i << " ";
-        ofile << tetCoords[i*4] << " ";
-        ofile << tetCoords[i*4+1] << " ";
-        ofile << tetCoords[i*4+2] << " ";
-        ofile << tetCoords[i*4+3];
-        ofile << std::endl;
-    }
-    std::ofstream onodes("tmp.node");
-    // Line is num nodes, dimension, num attributes, 0 for boundary
-    onodes << vertCoords.size()/3 << " " << 3 << " " << 0 << " " << 0;
-    onodes << std::endl;
-    for(int i = 0; i < vertCoords.size()/3; i++) {
-        onodes << i << " ";
-        onodes << vertCoords[i*3] << " ";
-        onodes << vertCoords[i*3+1] << " ";
-        onodes << vertCoords[i*3+2] << " ";
-        onodes << std::endl;
-    }
-
-    printf("About to tgio.load_node...\n");
-    fflush(stdout);
-    out->load_node("tmp");
-    printf("Done with tgio.load_node.\n");
-    printf("About to tgio.load_tet...\n");
-    out->load_tet("tmp");
-    printf("Done with tgio.load_tet.\n");
-    fflush(stdout);
-}
-
-tetgenbehavior tet_behavior;
-bool baba = tet_behavior.parse_commandline("p");
-
+// XXX material and nodefile unused
 TetMesh::TetMesh(std::string filename, std::string nodefile) {
-    m_material = {0.16, 0.003, 0.16, 0.003};
-    assert(baba);
-    int ext_idx = filename.rfind('.');
-    if(ext_idx == -1) {
-        printf("Warning: file %s opened as TetMesh, but could not be read. Not loading.\n", filename.data());
-        return;
-    }
-    std::string ext = filename.substr(ext_idx);
-    std::string noext = filename.substr(0, ext_idx);
+    // material unused for now
+    // m_material = {0.16, 0.003, 0.16, 0.003};
     tetgenio out;
-    if(ext.compare(".obj") == 0) {
-        // TODO: parse obj, create tetgenio, tetrahedralize
-        tetgenio in;
-        convertObjFile(filename, &in);
-        printf("About to tetrahedralize...\n");
-        fflush(stdout);
-        double start = get_time();
-        tetrahedralize(&tet_behavior, &in, &out);
-        out.save_elements("tmp");
-        printf("Done tetrahedralizing. Took %f secs.\n", get_time() - start);
-        fflush(stdout);
-    }
-    else if(ext.compare(".smesh") == 0) {
-        // TODO: convert to .ele
-        tetgenio in;
-        in.load_poly((char *)noext.c_str());
-        tetrahedralize(&tet_behavior, &in, &out);
-    }
-    else if(ext.compare(".ele") == 0) {
-        // TODO: read file
-        if(nodefile.length() == 0) {
-            nodefile = filename.substr(0, ext_idx) + ".node";
-            printf("Nodefile not given for file %s, assuming nodefile is %s.\n", filename.data(), nodefile.data());
-            FILE *f = fopen(nodefile.c_str(), "r");
-            if(!f) {
-                printf("Assumption failed as %s does not exist.\n", nodefile.data());
-                return;
-            }
-            fclose(f);
-        }
-        out.load_tet((char*)noext.c_str());
-        int nodeext_idx = nodefile.rfind('.');
-        if(nodeext_idx == -1) {
-            printf("Warning: file %s opened as nodefile, but no extension found. Not loading.\n", nodefile.data());
-            return;
-        }
-        out.load_node((char*)nodefile.substr(0, nodeext_idx).c_str());
-    }
-    else if(ext.compare(".mesh") == 0) {
-        convertMeshFile(filename, &out);
-    }
-    else if(ext.compare(".node") == 0) {
-        printf("Warning: file %s opened as TetMesh, but is a .node file (list of points). You might have meant to open the associated .poly (for 2D mesh) or .ele (for 3D tetmesh) file.\n", filename.data());
-        return;
-    }
-    else {
-        printf("Warning: file %s opened as TetMesh, but could not be read. Not loading.\n", filename.data());
-    }
-
+    TetmeshParser::parse(filename, &out);
     m_tets = getTets(out);
     m_baryTransforms.resize(m_tets.size());
     m_points = getPoints(out);
+    m_isCrackTip.resize(m_points.size());
     m_norms.resize(m_points.size());
     m_vels.resize(m_points.size());
     m_pointMasses.resize(m_points.size());
-    m_pToTMap = tetsTouchingPoint(m_tets);
+    m_pToTMap = tetsTouchingPoint(m_tets, m_points.size());
     calcFacesAndNorms();
 
-    printf("Tets loaded: %d\n", m_tets.size());
-    printf("m_faces size is now %d\n", m_faces.size());
+    printf("Tets loaded: %lu\n", m_tets.size());
+    printf("m_faces size is now %lu\n", m_faces.size());
     calcBaryTransforms();
     calcPointMasses();
+    std::fill(m_isCrackTip.begin(), m_isCrackTip.end(), false);
     srand(time(NULL));
-    /*for(int i = 0; i < 1; i++) {
-        auto it = m_faces.begin(); // get random pt
-        int id = rand() % m_faces.size();
-        std::advance(it, id);
-        printf("%d\n", id);
-        assert(it->second);
-        int p1idx = it->first.x;
-        m_points[p1idx] += glm::normalize(m_norms[p1idx]) / 1.f;// * 5.f;
-    }*/
+
     // balloon everything out a bit
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         //m_points[i] *= 1.2;
     }
     calcNorms();
-    printf("N surface faces: %d\n", m_faces.size());
-    for(int i = 0; i < m_points.size(); i++) {
-        //printf("Point is at: %f,%f,%f, Norm is at: %f,%f,%f\n", m_points[i].x, m_points[i].y, m_points[i].z, m_norms[i].x, m_norms[i].y, m_norms[i].z);
-    }
+    printf("N surface faces: %lu\n", m_faces.size());
 }
 
-
-
-TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map) : TetMesh(node.primitive.meshfile) {
+TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map) {
     m_onode = node;
     if(!map.count(node.primitive.meshfile)) {
         map[node.primitive.meshfile] = std::make_unique<TetMesh>(node.primitive.meshfile);
@@ -420,13 +116,7 @@ TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique
     m_vels = copyFrom->m_vels;
 }
 
-std::vector<TetMesh> TetMesh::fracture(int pointIdx, glm::vec3 fracNorm) {
-    auto pt = m_points[pointIdx];
-    m_points.push_back(m_points[pointIdx]);
-    int point2Idx = m_points.size() - 1;
-    //for()
-}
-
+namespace {
 inline float randFloat() {
     return ((float)rand())/RAND_MAX*2-1;
 }
@@ -440,6 +130,116 @@ bool tetInverted(const std::vector<glm::vec3> &points, tet_t tet) {
     return glm::dot(cross123, p4 - p1) < 0;
 }
 
+Eigen::Matrix3f glmToEigen(glm::mat3x3 mat) {
+    Eigen::Matrix3f out;
+    out << mat[0][0], mat[1][0], mat[2][0],
+            mat[0][1], mat[1][1], mat[2][1],
+            mat[0][2], mat[1][2], mat[2][2];
+    return out;
+}
+
+glm::vec3 getCenter(const std::vector<glm::vec3> &points, tet_t tet) {
+    return (points[tet.p1] + points[tet.p2] + points[tet.p3] + points[tet.p4]) / 4.f;
+}
+
+bool hasFace(tet_t tet, int p1, int p2, int p3) {
+    std::unordered_set<int> s = {tet.p1, tet.p2, tet.p3, tet.p4};
+    return s.count(p1) && s.count(p2) && s.count(p3);
+}
+}
+
+int TetMesh::addNewPoint() {
+    m_points.push_back(glm::vec3());
+    m_norms.push_back(glm::vec3());
+    m_isCrackTip.push_back(false);
+    m_vels.push_back(glm::vec3());
+    m_pToTMap.push_back(std::vector<int>());
+    m_pointMasses.push_back(0);
+    return m_points.size() - 1;
+}
+
+void TetMesh::computeFracture(const tet_t& tet, glm::mat3x3 stress) {
+    Eigen::Matrix3f rho = glmToEigen(stress);
+    Eigen::EigenSolver<Eigen::Matrix3f> solver(rho, true);
+    Eigen::Vector3cf eig_values = solver.eigenvalues();
+    int maxidx = -1;
+    float maxval = -1;
+    for(long unsigned int i = 0;i < 3; i++) {
+        float val = std::abs(eig_values(i));
+        if(val > maxval) {
+            maxval = val;
+            maxidx = i;
+        }
+    }
+    Eigen::Vector3cf eigvector = solver.eigenvectors().col(maxidx);
+    glm::vec3 splitNormal(std::abs(eigvector(0)), std::abs(eigvector(1)), std::abs(eigvector(2)));
+    splitNormal = glm::normalize(splitNormal);
+    if(maxval > -1) {
+        printf("Cracking!\n");
+        int tip;
+        std::vector<int> crackTips;
+        crackTips.reserve(4);
+        if(m_isCrackTip[tet.p1])
+            crackTips.push_back(tet.p1);
+        if(m_isCrackTip[tet.p2])
+            crackTips.push_back(tet.p2);
+        if(m_isCrackTip[tet.p3])
+            crackTips.push_back(tet.p3);
+        if(m_isCrackTip[tet.p4])
+            crackTips.push_back(tet.p4);
+
+        if(crackTips.size() == 0) {
+            tip = (int[]){tet.p1, tet.p2, tet.p3, tet.p4}[rand() % 4];
+        }
+        else {
+            tip = crackTips[rand() % crackTips.size()];
+        }
+        int pminus = addNewPoint();
+        m_points[pminus] = m_points[tip];
+        m_vels[pminus] = m_vels[tip];
+        m_pointMasses[pminus] = m_pointMasses[tip] / 2;
+        m_pointMasses[tip] = m_pointMasses[pminus];
+        const std::vector<int> *tetsTouching = &m_pToTMap[tip];
+        std::vector<int> plusSide, minusSide;
+        for(long unsigned int i = 0;i < tetsTouching->size(); i++) {
+            int tetidx = (*tetsTouching)[i];
+            tet_t tet = m_tets[tetidx];
+            if(glm::dot(splitNormal, getCenter(m_points, tet) - m_points[tip]) < 0) {
+                // behind plane, swap to other point
+                /*if(tet.p1 == tip)
+                    m_tets[tetidx].p1 = pminus;
+                if(tet.p2 == tip)
+                    m_tets[tetidx].p2 = pminus;
+                if(tet.p3 == tip)
+                    m_tets[tetidx].p3 = pminus;
+                if(tet.p4 == tip)
+                    m_tets[tetidx].p4 = pminus;
+                tetsTouching->erase(tetsTouching->begin() + i);
+                i--;
+                m_pToTMap[pminus].push_back(tetidx);*/
+                minusSide.push_back(tetidx);
+            }
+            else {
+                plusSide.push_back(tetidx);
+            }
+        }
+        for(long unsigned int i = 0;i < plusSide.size(); i++) {
+            tet_t ti = m_tets[i];
+            for(long unsigned int j = 0; j < minusSide.size(); j++) {
+                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p3) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p3))
+                    1;
+                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p4))
+                    1;
+                if((tip == ti.p1 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p3, ti.p4))
+                    1;
+                if((tip == ti.p2 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p2, ti.p3, ti.p4))
+                    1;
+            }
+        }
+
+    }
+}
+
 void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
     // total force = gravity/other global forces + stress per element
     // stress = elastic stress + viscous stress
@@ -449,84 +249,64 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     // strain rate = (dx/du)T * (dv/du) + (dv/du)T * (dx/du), where dv/du = V*barytrans, where V is [v1 - v4, v2 - v4, v3 - v4], v velocities
     // so by computing that, we can get force for each node
     glm::mat3x3 id = glm::mat3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
-    for(int i = 0; i < m_tets.size(); i++) {
+    std::mutex forcesMutex;
+    //for(long unsigned int i = 0;i < m_tets.size(); i++) {
+    auto calc_forces_i = [&](int i) {
         auto tet = m_tets[i];
         if(tetInverted(points, tet)) {
             printf("Inverted tet (#%d) found!\n", i);
             fflush(stdout);
         }
+
         auto p1 = points[tet.p1];
         auto p2 = points[tet.p2];
         auto p3 = points[tet.p3];
         auto p4 = points[tet.p4];
-        if(p1 == p2 || p1 == p3 || p1 == p4 || p2 == p3 || p2 == p4 || p3 == p4)
-            continue;
 
         glm::mat3x3 P(p1 - p4, p2 - p4, p3 - p4);
-        glm::mat3x3 dx = P * m_baryTransforms[i];
-        glm::mat3x3 dxT = dx;
-        dx = glm::transpose(dx);
-        glm::mat3x3 strain = dxT * dx - id; //- id;
+        glm::mat3x3 dxT = P * m_baryTransforms[i];
+        glm::mat3x3 dx = glm::transpose(dxT);
 
-        //glm::mat3x3 stress_elastic = /*m_material.incompressibility*/ settings.femIncompressibility * (strain[0][0] + strain[1][1] + strain[2][2]) * id
-        //        + 2 * settings.femRigidity /*m_material.rigidity*/ * strain;
+        glm::mat3x3 strain = dxT * dx - id; //- id;
         glm::mat3x3 trace_matrix = (strain[0][0] + strain[1][1] + strain[2][2]) * id;
+
         glm::mat3x3 stress_elastic = 2 * settings.femRigidity * (strain - 1/3.f * trace_matrix)
                 + settings.femIncompressibility * trace_matrix;
+
         auto v1 = vels[tet.p1];
         auto v2 = vels[tet.p2];
         auto v3 = vels[tet.p3];
         auto v4 = vels[tet.p4];
 
         glm::mat3x3 V(v1 - v4, v2 - v4, v3 - v4);
-
-        glm::mat3x3 dv = V * m_baryTransforms[i];
-        glm::mat3x3 dvT = dv;
-        dv = glm::transpose(dv);
+        glm::mat3x3 dvT = V * m_baryTransforms[i];
+        glm::mat3x3 dv = glm::transpose(dvT);
 
         glm::mat3x3 strain_rate = dxT * dv + dvT * dx;
-
-        //glm::mat3x3 stress_viscous = /*m_material.viscous1*/ settings.femBulkViscosity * (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id
-        //        + 2 * settings.femShearViscosity /*m_material.viscous2*/ * strain_rate;
         glm::mat3x3 sr_trace_matrix = (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id;
+
         glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * (strain_rate - 1/3.f * sr_trace_matrix)
                 + settings.femIncompressibility * sr_trace_matrix;
+
         glm::mat3x3 stress_total = stress_elastic + stress_viscous;
+        //computeFracture(tet, stress_total);
         glm::mat3x3 stress_t_ws = dx * stress_total;
-        glm::vec3 cross234 = glm::cross(p4 - p2, p3 - p2);
-        glm::vec3 cross134 = glm::cross(p4 - p3, p1 - p3);
-        glm::vec3 cross124 = glm::cross(p4 - p1, p2 - p1);
-        glm::vec3 cross123 = glm::cross(p2 - p1, p3 - p1);
-        float epsilon = -1;
-        glm::vec3 p1force;
-        glm::vec3 p2force;
-        glm::vec3 p3force;
-        glm::vec3 p4force;
-        if(glm::length(cross234) > epsilon)
-            p1force = stress_t_ws * cross234;
-        if(glm::length(cross134) > epsilon)
-            p2force = stress_t_ws * cross134;
-        if(glm::length(cross124) > epsilon)
-            p3force = stress_t_ws * cross124;
-        if(glm::length(cross123) > epsilon)
-            p4force = stress_t_ws * cross123;
-        if(glm::length(p1force) > 1000 || glm::length(p2force) > 1000 || glm::length(p3force) > 1000 || glm::length(p4force) > 1000) {
-            /*printf("forces real bigg, ls:\n");
-            printf("%f, %f, %f at %f, %f, %f\n", p1force.x, p1force.y, p1force.z, (p1-p4).x, (p1-p4).y, (p1-p4).z);
-            printf("%f, %f, %f at %f, %f, %f\n", p2force.x, p2force.y, p2force.z, (p2-p4).x, (p2-p4).y, (p2-p4).z);
-            printf("%f, %f, %f at %f, %f, %f\n", p3force.x, p3force.y, p3force.z, (p3-p4).x, (p3-p4).y, (p3-p4).z);
-            printf("%f, %f, %f at %f, %f, %f\n", p4force.x, p4force.y, p4force.z, 0.f, 0.f, 0.f);
-            fflush(stdout);*/
+        glm::vec3 p1force = stress_t_ws * -glm::cross(p4 - p2, p3 - p2);
+        glm::vec3 p2force = stress_t_ws * -glm::cross(p4 - p3, p1 - p3);
+        glm::vec3 p3force = stress_t_ws * -glm::cross(p4 - p1, p2 - p1);
+        glm::vec3 p4force = stress_t_ws * -glm::cross(p2 - p1, p3 - p1);
 
-        }
-        forcePerNode[tet.p1] -= p1force;
-        forcePerNode[tet.p2] -= p2force;
-        forcePerNode[tet.p3] -= p3force;
-        forcePerNode[tet.p4] -= p4force;
+        //forcesMutex.lock();
+        forcePerNode[tet.p1] += p1force;
+        forcePerNode[tet.p2] += p2force;
+        forcePerNode[tet.p3] += p3force;
+        forcePerNode[tet.p4] += p4force;
+        //forcesMutex.unlock();
+    };
+
+    for(long unsigned int i = 0;i < m_tets.size(); i++) {
+        calc_forces_i(i);
     }
-}
-
-bool detectInversion(std::vector<glm::vec3> points, std::vector<glm::vec3> tets) {
 
 }
 
@@ -534,15 +314,10 @@ bool detectInversion(std::vector<glm::vec3> points, std::vector<glm::vec3> tets)
 #define PENALTY_ACCEL_K 50000.f
 
 void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
-    for(int i = 0; i < points.size(); i++) {
+    for(long unsigned int i = 0;i < points.size(); i++) {
         if(points[i].y < floorY) {
-            glm::vec3 force_normal = m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
-            //m_vels[i].y = (floorY - m_points[i].y);
-            //float friction_mag = glm::length(0.1 * m_pointMasses[i]) * 0.4;
-
-            forcePerNode[i] += force_normal; /* + friction_mag * glm::normalize(-(forcePerNode[i] - m_pointMasses[i] * glm::vec3(0, -0.1, 0)));*/
-            //m_points[i].y = floorY;
-            //m_vels[i].y = 0;
+            glm::vec3 penaltyForce = m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
+            forcePerNode[i] += penaltyForce;
         }
     }
 }
@@ -550,7 +325,7 @@ void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const
 void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
     std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
     // first add grav
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, m_points, m_vels);
@@ -560,7 +335,7 @@ void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
 void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
     std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
     // first add grav
-    for(int i = 0; i < points.size(); i++) {
+    for(long unsigned int i = 0;i < points.size(); i++) {
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, points, vels);
@@ -569,20 +344,7 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
 
 void TetMesh::update(float timestep) {
     // step 1: get all forces.
-#if 0
-    static glm::vec3 forcePerNode[m_points.size()];
 
-    computeAllForces(forcePerNode);
-    // midpoint method:
-    // copy old points and vels for final calc
-
-    for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forcePerNode[i] / m_pointMasses[i];
-        glm::vec3 velIncrement = accel * timestep;
-        m_points[i] += m_vels[i] * timestep + velIncrement;// / 2.f;
-        m_vels[i] += velIncrement;
-    }
-#else
     std::vector<glm::vec3> forces(m_points.size()),
             dxk1(m_points.size()),
             dxk2(m_points.size()),
@@ -594,8 +356,13 @@ void TetMesh::update(float timestep) {
             dvk3(m_points.size()),
             dvk4(m_points.size()),
             vnext(m_points.size());
+    // We use RK4, which is an advanced explicit integration technique in which we find derivatives
+    // at multiple sample points and average them to get the final derivative we use to move the
+    // simulation forward one timestep.
+
+    // P1: Start by calculating derivatives at current pos+velocity
     computeAllForcesFrom(forces, m_points, m_vels);
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         glm::vec3 accel = forces[i] / m_pointMasses[i];
         dxk1[i] = m_vels[i];
         dvk1[i] = accel; // compute k1 + p
@@ -603,72 +370,38 @@ void TetMesh::update(float timestep) {
         xnext[i] = m_points[i] + dxk1[i] * 0.5f * timestep;
         vnext[i] = m_vels[i] + dvk1[i] * 0.5f * timestep;
     }
+    // P2: Move pos+velocity half of a timestep from orig using derivatives from P1, calculate derivatives
     computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         glm::vec3 accel = forces[i] / m_pointMasses[i];
         dxk2[i] = vnext[i];
         dvk2[i] = accel;
         xnext[i] = m_points[i] + dxk2[i] * 0.5f * timestep;
         vnext[i] = m_vels[i] + dvk2[i] * 0.5f * timestep;
     }
+    // P3: Move pos+velocity half of a timestep from orig using derivatives from P2, calculate derivatives
     computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         glm::vec3 accel = forces[i] / m_pointMasses[i];
         dxk3[i] = vnext[i];
         dvk3[i] = accel;
         xnext[i] = m_points[i] + dxk3[i] * 1.0f * timestep;
         vnext[i] = m_vels[i] + dvk3[i] * 1.0f * timestep;
     }
+    // P4: Move pos+velocity a full timestep from orig using derivatives from P3, calculate derivatives
     computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         glm::vec3 accel = forces[i] / m_pointMasses[i];
         dxk4[i] = vnext[i];
         dvk4[i] = accel;
     }
-    for(int i = 0; i < m_points.size(); i++) {
+    // Take final derivatives to be (derivs(P1) + 2*derivs(P2) + 2*derivs(P3) + derivs(P4))/6, i.e.
+    // a weighted average, then move pos+velocity a full timestep from the orig using those derivatives
+    for(long unsigned int i = 0;i < m_points.size(); i++) {
         m_points[i] += timestep * (dxk1[i] + dxk4[i] + 2.f*(dxk2[i] + dxk3[i])) / 6.f;
         m_vels[i] += timestep * (dvk1[i] + dvk4[i] + 2.f*(dvk2[i] + dvk3[i])) / 6.f;
     }
-    /* computeAllForcesFrom(forces, m_points, m_vels);
-    for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forces[i] / m_pointMasses[i];
-        dvk1[i] = accel; // compute k1 + p
-        vnext[i] = m_vels[i] + dvk1[i] * 0.5f * timestep;
-        dxk1[i] = vnext[i];
-        //vtemp[i] = m_vels[i] + velIncrement
-        xnext[i] = m_points[i] + dxk1[i] * 0.5f * timestep;
 
-    }
-    computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forces[i] / m_pointMasses[i];
-        dvk2[i] = accel;
-        vnext[i] = m_vels[i] + dvk2[i] * 0.5f * timestep;
-        dxk2[i] = vnext[i];
-        xnext[i] = m_points[i] + dxk2[i] * 0.5f * timestep;
-
-    }
-    computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forces[i] / m_pointMasses[i];
-        dvk3[i] = accel;
-        vnext[i] = m_vels[i] + dvk3[i] * 1.0f * timestep;
-        dxk3[i] = vnext[i];
-        xnext[i] = m_points[i] + dxk3[i] * 1.0f * timestep;
-
-    }
-    computeAllForcesFrom(forces, xnext, vnext);
-    for(int i = 0; i < m_points.size(); i++) {
-        glm::vec3 accel = forces[i] / m_pointMasses[i];
-        dvk4[i] = accel;
-        dxk4[i] = m_vels[i] + dvk4[i] * 1.0f * timestep;//vnext[i];
-    }
-    for(int i = 0; i < m_points.size(); i++) {
-        m_points[i] += timestep * (dxk1[i] + dxk4[i] + 2.f*(dxk2[i] + dxk3[i])) / 6.f;
-        m_vels[i] += timestep * (dvk1[i] + dvk4[i] + 2.f*(dvk2[i] + dvk3[i])) / 6.f;
-    }*/
-
-#endif
     calcNorms();
 }
 
@@ -700,7 +433,7 @@ void getNormalsFromFaces(const std::unordered_map<glm::ivec3, bool, ivec3_hash>&
 void TetMesh::calcBaryTransforms() {
     // calculate the barycentric coordinate transform (from point in mat space to point in tetra's bary coordinate space)
     assert(m_baryTransforms.size() == m_tets.size());
-    for(int i = 0; i < m_tets.size(); i++) {
+    for(long unsigned int i = 0;i < m_tets.size(); i++) {
         auto tet = m_tets[i];
         auto v1 = m_points[tet.p1];
         auto v2 = m_points[tet.p2];
@@ -717,7 +450,7 @@ void TetMesh::calcPointMasses() {
     assert(m_pointMasses.size() == m_points.size());
     std::fill(m_pointMasses.begin(), m_pointMasses.end(), 0);
     float maxvol = -1, minvol = INFINITY;
-    for(int i = 0; i < m_tets.size(); i++) {
+    for(long unsigned int i = 0;i < m_tets.size(); i++) {
         // let density = 4000 (i.e. water*4), then we can add tet vol to each node mass
         tet_t tet = m_tets[i];
         auto p1 = m_points[tet.p1];
@@ -739,7 +472,7 @@ void TetMesh::calcPointMasses() {
     }
     float sum = 0;
     float minm = INFINITY;
-    for(int i = 0; i < m_pointMasses.size(); i++) {
+    for(long unsigned int i = 0;i < m_pointMasses.size(); i++) {
         sum += m_pointMasses[i];
         if(m_pointMasses[i] < minm)
             minm = m_pointMasses[i];
@@ -747,7 +480,7 @@ void TetMesh::calcPointMasses() {
     }
     printf("Total mass is %f, smallest mass is %f w/ inverse %f\nMax volume is %f, min volume is %f", sum, minm, 1.f/minm, maxvol, minvol);
     /*float min_allowed_mass = sum / m_points.size() / 100;
-    for(int i = 0; i < m_pointMasses.size(); i++) {
+    for(long unsigned int i = 0;i < m_pointMasses.size(); i++) {
         if(m_pointMasses[i] < min_allowed_mass) {
             sum += min_allowed_mass - m_pointMasses[i];
             m_pointMasses[i] = min_allowed_mass;
@@ -780,11 +513,7 @@ bool setIfContains(std::unordered_map<glm::ivec3, bool, ivec3_hash>& map, glm::i
 void TetMesh::calcFacesAndNorms() {
     m_faces.clear();
     // we will extract the surface mesh by looking at every face and finding which are occluded
-    printf("Hash of 1,2,3 is %d, Hash of 1,3,2 is %d\n", hash_ivec3_fn(glm::ivec3(1, 2, 3)), hash_ivec3_fn(glm::ivec3(1, 3, 2)));
-    std::unordered_map<glm::ivec3, bool, ivec3_hash> abacus;
-    abacus[glm::ivec3(1, 2, 3)] = false;
-    abacus[glm::ivec3(1, 3, 2)] = true;
-    for(int i = 0; i < m_tets.size(); i++) {
+    for(long unsigned int i = 0;i < m_tets.size(); i++) {
         tet_t tet = m_tets[i];
         glm::ivec3 f1(tet.p1, tet.p2, tet.p4),
                 f2(tet.p2, tet.p3, tet.p4),

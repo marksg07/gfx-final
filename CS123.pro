@@ -63,7 +63,9 @@ SOURCES += \
     gl/util/errorchecker.cpp \
     intersect/implicitshape.cpp \
     intersect/kdtree.cpp \
-    shapes/tetmesh.cpp
+    shapes/tetmesh.cpp \
+    shapes/tetmeshparser.cpp \
+    shapes/timing.cpp
 
 HEADERS += \
     camera/Camera.h \
@@ -108,7 +110,9 @@ HEADERS += \
     intersect/implicitshape.h \
     intersect/kdtree.h \
     shapes/tetmesh.h \
-    tetgen/tetgen.h
+    tetgen/tetgen.h \
+    shapes/tetmeshparser.h \
+    shapes/timing.h
 
 
 FORMS += ui/mainwindow.ui

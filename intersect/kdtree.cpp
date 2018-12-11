@@ -4,21 +4,21 @@
 #include "Settings.h"
 
 KDTree::KDTree(int nnodes, std::unique_ptr<KDTree> l, std::unique_ptr<KDTree> r, int depth, glm::vec3 mib, glm::vec3 mxb) :
-    m_nodes(),
-    m_depth(depth),
     m_nodecount(nnodes),
+    m_nodes(),
     m_minbound(mib),
-    m_maxbound(mxb) {
+    m_maxbound(mxb),
+    m_depth(depth) {
     m_l = std::move(l);
     m_r = std::move(r);
 }
 
 KDTree::KDTree(std::vector<object_node_t> nodes, std::unique_ptr<KDTree> l, std::unique_ptr<KDTree> r, int depth, glm::vec3 mib, glm::vec3 mxb) :
-    m_nodes(nodes),
-    m_depth(depth),
     m_nodecount(nodes.size()),
+    m_nodes(nodes),
     m_minbound(mib),
-    m_maxbound(mxb) {
+    m_maxbound(mxb),
+    m_depth(depth) {
     m_l = std::move(l);
     m_r = std::move(r);
 }
@@ -39,7 +39,7 @@ struct split chooseSplit(const std::vector<object_node_t>& m_nodes, int depth, g
     double maxAxis = maxbound[splitAxis];
     double axis = NAN;
     double bestCost = m_nodes.size() * surfaceArea(maxbound - minbound);
-    for(int i = 0; i < m_nodes.size(); i++) {
+    for(unsigned long i = 0; i < m_nodes.size(); i++) {
         for(int pn = 0; pn <= 1; pn += 1) {
             double ax = pn ? m_nodes[i].maxbound[splitAxis] : m_nodes[i].minbound[splitAxis];
             //printf("min is %f, max is %f. Considering %f\n", minAxis, maxAxis, ax);
@@ -56,7 +56,7 @@ struct split chooseSplit(const std::vector<object_node_t>& m_nodes, int depth, g
             int leftcount = 0;
             int rightcount = 0;
 
-            for(int j = 0; j < m_nodes.size(); j++) {
+            for(unsigned long j = 0; j < m_nodes.size(); j++) {
                 double objbL = m_nodes[j].minbound[splitAxis];
                 double objbR = m_nodes[j].maxbound[splitAxis];
                 if(!(objbR < minAxis || objbL >= ax)) {
@@ -126,8 +126,7 @@ struct split chooseSplitNlogN2(const std::vector<object_node_t>& nodes, int dept
     std::sort(events.begin(), events.end(), eventLess);
     int Nl = 0;
     int Nr = n;
-    for(int i = 0; i < events.size(); i++) {
-        int pl = 0, pr = 0;
+    for(unsigned long i = 0; i < events.size(); i++) {
         KDEvent *event = &events[i];
         assert(event->plane > minbound[axis] && event->plane < maxbound[axis]);
         if(event->type == END)
@@ -160,7 +159,7 @@ std::unique_ptr<KDTree> KDTree::buildTree(const std::vector<object_node_t>& m_no
     double maxAxis = maxbound[splitAxis];
     std::vector<object_node_t> left_nodes;
     std::vector<object_node_t> right_nodes;
-    for(int i = 0; i < m_nodes.size(); i++) {
+    for(unsigned long i = 0; i < m_nodes.size(); i++) {
         double objbL = m_nodes[i].minbound[splitAxis];
         double objbR = m_nodes[i].maxbound[splitAxis];
         if(!((objbL <= minAxis && objbR <= minAxis)
@@ -223,7 +222,7 @@ struct ixInfo findIntersect(glm::vec4 P, glm::vec4 d, const std::vector<object_n
     const object_node_t *front_obj = NULL;
     glm::vec4 os_intersect;
     //printf("itering thru obj, n_objs = %d\n", m_nodes.size());
-    for(int i = 0; i < nodes.size(); i++) {
+    for(unsigned long i = 0; i < nodes.size(); i++) {
         const object_node_t *obj = &nodes[i];
         glm::vec4 eye_os = obj->invtrans * P;
         glm::vec4 v_dir_os = obj->invtrans * d;

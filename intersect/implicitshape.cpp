@@ -121,7 +121,6 @@ struct tAndPlace ImplicitShape::cylinderIntersectT(glm::vec4 P, glm::vec4 d) {
         if(cb_min <= std::min(cap1T, cap2T))
             return {cb_min, CYL_BODY};
     }
-    ISPlace mincap;
     if(cap1T < cap2T) {
         return {cap1T, CYL_BOT};
     }
@@ -195,7 +194,7 @@ float ImplicitShape::AABBIntersectT(glm::vec4 P, glm::vec4 d, glm::vec4 invd, gl
     // be less than all the times of exit. This means that there is some period of time at which all coordinates
     // are within the constraints of the box. The min time this happens is max(t entrance x, t entrance y, t entrance z).
     // The condition that this happens is that that time is <= min(t exit x, t exit y, t exit z).
-    float temp, t1x, t2x, t1y, t2y, t1z, t2z;
+    float t1x, t2x, t1y, t2y, t1z, t2z;
     // precomputing invdir both saves time and solves a problem where the ray's direction.x is +/- 0.
     // we also eliminate branches by using signs as indices.
     float tx[] = {(mn.x - P.x)*invd.x,

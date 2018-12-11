@@ -12,6 +12,7 @@ using namespace CS123::GL;
 
 SceneviewScene::SceneviewScene()
 {
+    initializationMutex.lock();
     // TODO: [SCENEVIEW] Set up anything you need for your Sceneview scene here...
     m_running = false;
     loadPhongShader();
@@ -22,12 +23,14 @@ SceneviewScene::SceneviewScene()
 }
 
 void SceneviewScene::parsingDone() {
-    // Setup for after we finish parsing.
-    printf("mnodes size is %d\n\n\n\n", m_nodes.size());
+    printf("Parsing done called\n");
     fflush(stdout);
-    for(int i = 0; i < m_nodes.size(); i++) {
+
+    // Setup for after we finish parsing.
+    printf("mnodes size is %lu\n\n\n\n", m_nodes.size());
+    fflush(stdout);
+    for(unsigned long i = 0; i < m_nodes.size(); i++) {
         CS123ScenePrimitive prim = m_nodes[i].primitive;
-        printf("Checking prim %d\n");
         fflush(stdout);
         if(prim.type != PrimitiveType::PRIMITIVE_MESH)
             continue;
@@ -38,7 +41,8 @@ void SceneviewScene::parsingDone() {
         //mesh.buildShape();
         //m_mesh[prim.meshfile] = std::move(mesh.getOpenGLShape());
     }
-    //m_ready = 1;
+    m_ready = 1;
+    initializationMutex.unlock();
 }
 
 SceneviewScene::~SceneviewScene()
@@ -104,7 +108,7 @@ void SceneviewScene::setLights()
     // Set up the lighting for your scene using m_phongShader.
     // The lighting information will most likely be stored in CS123SceneLightData structures.
     //
-    for(int i = 0; i < m_lights.size(); i++) {
+    for(unsigned long i = 0; i < m_lights.size(); i++) {
         m_phongShader->setLight(m_lights[i]);
     }
 }
@@ -156,14 +160,14 @@ void SceneviewScene::setLights()
 void SceneviewScene::renderGeometry() {
     //while(!m_ready);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    for(int i = 0; i < m_meshes.size(); i++) {
+    for(unsigned long i = 0; i < m_meshes.size(); i++) {
         TetMesh& tetmesh = m_meshes[i];
         auto onode = tetmesh.getONode();
         m_phongShader->setUniform("m", onode.trans);
         m_phongShader->applyMaterial(onode.primitive.material);
         if(m_running) {
             float timePerStep = settings.femTimeStep / settings.femStepsPerFrame;
-            for(int i = 0; i < settings.femStepsPerFrame; i++) {
+            for(int j = 0; j < settings.femStepsPerFrame; j++) {
                 tetmesh.update(timePerStep);
             }
         }

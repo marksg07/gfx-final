@@ -33,7 +33,8 @@ class CS123XmlSceneParser;
 class SupportCanvas3D : public QGLWidget {
     Q_OBJECT
 public:
-    void doUpdateLoop();
+    void startUpdateLoop();
+    void stopUpdateLoop();
     SupportCanvas3D(QGLFormat format, QWidget *parent);
 
     virtual ~SupportCanvas3D();
@@ -119,6 +120,7 @@ private:
     std::unique_ptr<OrbitingCamera> m_defaultOrbitingCamera;
     OpenGLScene *m_currentScene;
     std::unique_ptr<SceneviewScene> m_sceneviewScene;
+    QTimer m_updateTimer;
 };
 
 #endif // SUPPORTCANVAS3D_H
