@@ -1,6 +1,7 @@
 #ifndef TETMESH_H
 #define TETMESH_H
 #include <unordered_map>
+#include <unordered_set>
 #include "ui/SupportCanvas3D.h"
 #include "scenegraph/Scene.h"
 #include "openglshape.h"
@@ -33,6 +34,14 @@ std::size_t hash_ivec3_fn(const glm::ivec3& v);
 struct ivec3_hash : public std::unary_function<glm::ivec3, std::size_t> {
     std::size_t operator()(const glm::ivec3& v) const {
         return hash_ivec3_fn(v);
+    }
+};
+
+std::size_t hash_ivec2_fn(const glm::ivec2& v);
+
+struct ivec2_hash : public std::unary_function<glm::ivec2, std::size_t> {
+    std::size_t operator()(const glm::ivec2& v) const {
+        return hash_ivec2_fn(v);
     }
 };
 
@@ -74,13 +83,17 @@ public:
 private:
     void calcFacesAndNorms();
     void calcNorms();
-    void computeFracture(const tet_t& tet, glm::mat3x3 stress);
+    void computeFracturing();
+    void computeFracture(std::vector<glm::vec3>& forcePerNode, const tet_t& tet, glm::mat3x3 stress);
     void computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
     void computeAllForces(std::vector<glm::vec3>& forcePerNode);
     void computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels);
     void computeCollisionForces(std::vector<glm::vec3>& forcePerNode,  const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY);
+    bool markIfContains(const std::unordered_set<glm::ivec2, ivec2_hash>& set, glm::ivec2 vec);
     void calcBaryTransforms();
     void calcPointMasses();
+    void markTouchingFaces(const std::unordered_set<glm::ivec2, ivec2_hash>& faceSet, tet_t& tet, int pidx);
+
 
     int addNewPoint();
     std::vector<glm::vec3> m_points;
@@ -88,7 +101,7 @@ private:
     std::vector<glm::vec3> m_vels;
     std::vector<glm::vec3> m_norms;
     std::vector<tet_t> m_tets;
-    std::vector<std::vector<int>> m_pToTMap;
+    std::vector<std::unordered_set<glm::ivec2, ivec2_hash>> m_pToTMap;
     std::unordered_map<glm::ivec3, bool, ivec3_hash> m_faces;
     std::vector<glm::mat3x3> m_baryTransforms;
     object_node_t m_onode;

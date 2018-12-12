@@ -26,6 +26,13 @@ std::size_t hash_ivec3_fn(const glm::ivec3& v) {
     return hasher(v.x, v.y, v.z);
 
 }
+
+std::size_t hash_ivec2_fn(const glm::ivec2& v) {
+    hashh<int, int, int> hasher;
+    return hasher(v.x, v.y, 0);
+
+}
+
 namespace {
 inline glm::vec3 getPoint(const tetgenio& t, int i) {
     assert(i < t.numberofpoints);
@@ -54,14 +61,14 @@ std::vector<glm::vec3> getPoints(const tetgenio& t) {
     return ret;
 }
 
-std::vector<std::vector<int>> tetsTouchingPoint(const std::vector<tet_t>& tets, int psize) {
-    std::vector<std::vector<int>> pToTMap;
+std::vector<std::unordered_set<glm::ivec2, ivec2_hash>> tetsTouchingPoint(const std::vector<tet_t>& tets, int psize) {
+    std::vector<std::unordered_set<glm::ivec2, ivec2_hash>> pToTMap;
     pToTMap.resize(psize);
-    for(long unsigned int i = 0;i < tets.size(); i++) {
+    for(long unsigned int i = 0; i < tets.size(); i++) {
         tet_t tet = tets[i];
         for(int j = 0; j < 4; j++) {
             int pidx = tet[j];
-            pToTMap[pidx].push_back(i);
+            pToTMap[pidx].insert(glm::ivec2(i, j));
         }
     }
     return pToTMap;
@@ -82,6 +89,12 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     m_vels.resize(m_points.size());
     m_pointMasses.resize(m_points.size());
     m_pToTMap = tetsTouchingPoint(m_tets, m_points.size());
+    float avg = 0;
+    for(int i = 0; i < m_points.size(); i++) {
+        avg += m_pToTMap[i].size();
+    }
+    printf("Avg #tets touching point is %f\n", avg / m_points.size());
+    fflush(stdout);
     calcFacesAndNorms();
 
     printf("Tets loaded: %lu\n", m_tets.size());
@@ -114,6 +127,7 @@ TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique
     m_baryTransforms = copyFrom->m_baryTransforms;
     m_pointMasses = copyFrom->m_pointMasses;
     m_vels = copyFrom->m_vels;
+    m_isCrackTip = copyFrom->m_isCrackTip;
 }
 
 namespace {
@@ -153,91 +167,31 @@ int TetMesh::addNewPoint() {
     m_norms.push_back(glm::vec3());
     m_isCrackTip.push_back(false);
     m_vels.push_back(glm::vec3());
-    m_pToTMap.push_back(std::vector<int>());
+    m_pToTMap.push_back(std::unordered_set<glm::ivec2, ivec2_hash>());
     m_pointMasses.push_back(0);
     return m_points.size() - 1;
 }
 
-void TetMesh::computeFracture(const tet_t& tet, glm::mat3x3 stress) {
-    Eigen::Matrix3f rho = glmToEigen(stress);
-    Eigen::EigenSolver<Eigen::Matrix3f> solver(rho, true);
-    Eigen::Vector3cf eig_values = solver.eigenvalues();
-    int maxidx = -1;
-    float maxval = -1;
-    for(long unsigned int i = 0;i < 3; i++) {
-        float val = std::abs(eig_values(i));
-        if(val > maxval) {
-            maxval = val;
-            maxidx = i;
-        }
-    }
-    Eigen::Vector3cf eigvector = solver.eigenvectors().col(maxidx);
-    glm::vec3 splitNormal(std::abs(eigvector(0)), std::abs(eigvector(1)), std::abs(eigvector(2)));
-    splitNormal = glm::normalize(splitNormal);
-    if(maxval > -1) {
-        printf("Cracking!\n");
-        int tip;
-        std::vector<int> crackTips;
-        crackTips.reserve(4);
-        if(m_isCrackTip[tet.p1])
-            crackTips.push_back(tet.p1);
-        if(m_isCrackTip[tet.p2])
-            crackTips.push_back(tet.p2);
-        if(m_isCrackTip[tet.p3])
-            crackTips.push_back(tet.p3);
-        if(m_isCrackTip[tet.p4])
-            crackTips.push_back(tet.p4);
+// Given F, the deformation gradient, and V, the velocity gradient, calculate the stress.
+glm::mat3x3 getStress(glm::mat3x3 F, glm::mat3x3 V) {
+    glm::mat3x3 id = glm::mat3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
+    glm::mat3x3 Ft = glm::transpose(F);
+    glm::mat3x3 Vt = glm::transpose(V);
 
-        if(crackTips.size() == 0) {
-            tip = (int[]){tet.p1, tet.p2, tet.p3, tet.p4}[rand() % 4];
-        }
-        else {
-            tip = crackTips[rand() % crackTips.size()];
-        }
-        int pminus = addNewPoint();
-        m_points[pminus] = m_points[tip];
-        m_vels[pminus] = m_vels[tip];
-        m_pointMasses[pminus] = m_pointMasses[tip] / 2;
-        m_pointMasses[tip] = m_pointMasses[pminus];
-        const std::vector<int> *tetsTouching = &m_pToTMap[tip];
-        std::vector<int> plusSide, minusSide;
-        for(long unsigned int i = 0;i < tetsTouching->size(); i++) {
-            int tetidx = (*tetsTouching)[i];
-            tet_t tet = m_tets[tetidx];
-            if(glm::dot(splitNormal, getCenter(m_points, tet) - m_points[tip]) < 0) {
-                // behind plane, swap to other point
-                /*if(tet.p1 == tip)
-                    m_tets[tetidx].p1 = pminus;
-                if(tet.p2 == tip)
-                    m_tets[tetidx].p2 = pminus;
-                if(tet.p3 == tip)
-                    m_tets[tetidx].p3 = pminus;
-                if(tet.p4 == tip)
-                    m_tets[tetidx].p4 = pminus;
-                tetsTouching->erase(tetsTouching->begin() + i);
-                i--;
-                m_pToTMap[pminus].push_back(tetidx);*/
-                minusSide.push_back(tetidx);
-            }
-            else {
-                plusSide.push_back(tetidx);
-            }
-        }
-        for(long unsigned int i = 0;i < plusSide.size(); i++) {
-            tet_t ti = m_tets[i];
-            for(long unsigned int j = 0; j < minusSide.size(); j++) {
-                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p3) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p3))
-                    1;
-                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p4))
-                    1;
-                if((tip == ti.p1 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p3, ti.p4))
-                    1;
-                if((tip == ti.p2 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p2, ti.p3, ti.p4))
-                    1;
-            }
-        }
 
-    }
+    glm::mat3x3 strain = Ft * F - id;
+    glm::mat3x3 trace_matrix = (strain[0][0] + strain[1][1] + strain[2][2]) * id;
+
+    glm::mat3x3 stress_elastic = 2 * settings.femRigidity * (strain - 1/3.f * trace_matrix)
+            + settings.femIncompressibility * trace_matrix;
+
+    glm::mat3x3 strain_rate = Ft * V + Vt * F;
+    glm::mat3x3 sr_trace_matrix = (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id;
+
+    glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * (strain_rate - 1/3.f * sr_trace_matrix)
+            + settings.femIncompressibility * sr_trace_matrix;
+
+    return stress_elastic + stress_viscous;
 }
 
 void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
@@ -263,34 +217,20 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
         auto p3 = points[tet.p3];
         auto p4 = points[tet.p4];
 
-        glm::mat3x3 P(p1 - p4, p2 - p4, p3 - p4);
-        glm::mat3x3 dxT = P * m_baryTransforms[i];
-        glm::mat3x3 dx = glm::transpose(dxT);
-
-        glm::mat3x3 strain = dxT * dx - id; //- id;
-        glm::mat3x3 trace_matrix = (strain[0][0] + strain[1][1] + strain[2][2]) * id;
-
-        glm::mat3x3 stress_elastic = 2 * settings.femRigidity * (strain - 1/3.f * trace_matrix)
-                + settings.femIncompressibility * trace_matrix;
-
         auto v1 = vels[tet.p1];
         auto v2 = vels[tet.p2];
         auto v3 = vels[tet.p3];
         auto v4 = vels[tet.p4];
 
-        glm::mat3x3 V(v1 - v4, v2 - v4, v3 - v4);
-        glm::mat3x3 dvT = V * m_baryTransforms[i];
-        glm::mat3x3 dv = glm::transpose(dvT);
+        glm::mat3x3 P(p1 - p4, p2 - p4, p3 - p4);
+        glm::mat3x3 F = glm::transpose(P * m_baryTransforms[i]);
 
-        glm::mat3x3 strain_rate = dxT * dv + dvT * dx;
-        glm::mat3x3 sr_trace_matrix = (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id;
+        glm::mat3x3 D(v1 - v4, v2 - v4, v3 - v4);
+        glm::mat3x3 V = glm::transpose(D * m_baryTransforms[i]);
 
-        glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * (strain_rate - 1/3.f * sr_trace_matrix)
-                + settings.femIncompressibility * sr_trace_matrix;
+        glm::mat3x3 stress = getStress(F, V);
+        glm::mat3x3 stress_t_ws = F * stress;
 
-        glm::mat3x3 stress_total = stress_elastic + stress_viscous;
-        //computeFracture(tet, stress_total);
-        glm::mat3x3 stress_t_ws = dx * stress_total;
         glm::vec3 p1force = stress_t_ws * -glm::cross(p4 - p2, p3 - p2);
         glm::vec3 p2force = stress_t_ws * -glm::cross(p4 - p3, p1 - p3);
         glm::vec3 p3force = stress_t_ws * -glm::cross(p4 - p1, p2 - p1);
@@ -342,8 +282,207 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
     computeCollisionForces(forcePerNode, points, vels, -2);
 }
 
+#define MIN_STRESS_FRACTURE 2000
+
+/*struct tetface {
+    int tetidx;
+    int p, p2, p3;
+    int vertExcluded;
+    int pIdx;
+};*/
+
+bool TetMesh::markIfContains(const std::unordered_set<glm::ivec2, ivec2_hash>& set, glm::ivec2 vec) {
+    if(set.count(vec) || set.count(glm::ivec2(vec.y, vec.x))) {
+        m_isCrackTip[vec.x] = true;
+        m_isCrackTip[vec.y] = true;
+    }
+    return true;
+}
+
+void TetMesh::markTouchingFaces(const std::unordered_set<glm::ivec2, ivec2_hash>& faceSet, tet_t& tet, int pidx) {
+    switch(pidx) {
+    case 0:
+        markIfContains(faceSet, glm::ivec2(tet[1], tet[2]));
+        markIfContains(faceSet, glm::ivec2(tet[2], tet[3]));
+        markIfContains(faceSet, glm::ivec2(tet[1], tet[3]));
+        break;
+    case 1:
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[2]));
+        markIfContains(faceSet, glm::ivec2(tet[2], tet[3]));
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[3]));
+        break;
+    case 2:
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[1]));
+        markIfContains(faceSet, glm::ivec2(tet[1], tet[3]));
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[3]));
+        break;
+    case 3:
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[1]));
+        markIfContains(faceSet, glm::ivec2(tet[1], tet[2]));
+        markIfContains(faceSet, glm::ivec2(tet[0], tet[2]));
+    }
+}
+
+void addTouchingFaces(std::unordered_set<glm::ivec2, ivec2_hash>& faceSet, tet_t& tet, int pidx) {
+    switch(pidx) {
+    case 0:
+        faceSet.insert(glm::ivec2(tet[1], tet[2]));
+        faceSet.insert(glm::ivec2(tet[2], tet[3]));
+        faceSet.insert(glm::ivec2(tet[1], tet[3]));
+        break;
+    case 1:
+        faceSet.insert(glm::ivec2(tet[0], tet[2]));
+        faceSet.insert(glm::ivec2(tet[2], tet[3]));
+        faceSet.insert(glm::ivec2(tet[0], tet[3]));
+        break;
+    case 2:
+        faceSet.insert(glm::ivec2(tet[0], tet[1]));
+        faceSet.insert(glm::ivec2(tet[1], tet[3]));
+        faceSet.insert(glm::ivec2(tet[0], tet[3]));
+        break;
+    case 3:
+        faceSet.insert(glm::ivec2(tet[0], tet[1]));
+        faceSet.insert(glm::ivec2(tet[1], tet[2]));
+        faceSet.insert(glm::ivec2(tet[0], tet[2]));
+    }
+}
+
+void TetMesh::computeFracturing() {
+    // first, mark points for fracturing.
+    std::unordered_map<int, glm::vec3> toFracture;
+    for(int i = 0; i < m_tets.size(); i++) {
+        tet_t tet = m_tets[i];
+
+        auto p1 = m_points[tet.p1];
+        auto p2 = m_points[tet.p2];
+        auto p3 = m_points[tet.p3];
+        auto p4 = m_points[tet.p4];
+
+        auto v1 = m_vels[tet.p1];
+        auto v2 = m_vels[tet.p2];
+        auto v3 = m_vels[tet.p3];
+        auto v4 = m_vels[tet.p4];
+
+        glm::mat3x3 P(p1 - p4, p2 - p4, p3 - p4);
+        glm::mat3x3 F = glm::transpose(P * m_baryTransforms[i]);
+
+        glm::mat3x3 D(v1 - v4, v2 - v4, v3 - v4);
+        glm::mat3x3 V = glm::transpose(D * m_baryTransforms[i]);
+
+        // have to get in world space by premult by F so our split plane is right
+        glm::mat3x3 stress = F * getStress(F, V);
+        Eigen::Matrix3f rho = glmToEigen(stress);
+        Eigen::EigenSolver<Eigen::Matrix3f> solver(rho, true);
+        Eigen::Vector3cf eig_values = solver.eigenvalues();
+        int maxidx = -1;
+        float maxval = -1;
+        for(long unsigned int i = 0;i < 3; i++) {
+            float val = std::abs(eig_values(i));
+            if(val > maxval) {
+                maxval = val;
+                maxidx = i;
+            }
+        }
+
+        if(maxval > MIN_STRESS_FRACTURE) {
+            int tip;
+            std::vector<int> crackTips;
+            crackTips.reserve(4);
+            if(m_isCrackTip[tet.p1])
+                crackTips.push_back(tet.p1);
+            if(m_isCrackTip[tet.p2])
+                crackTips.push_back(tet.p2);
+            if(m_isCrackTip[tet.p3])
+                crackTips.push_back(tet.p3);
+            if(m_isCrackTip[tet.p4])
+                crackTips.push_back(tet.p4);
+
+            if(crackTips.size() == 0) {
+                tip = (int[]){tet.p1, tet.p2, tet.p3, tet.p4}[rand() % 4];
+            }
+            else {
+                tip = crackTips[rand() % crackTips.size()];
+            }
+            Eigen::Vector3cf eigvector = solver.eigenvectors().col(maxidx);
+            glm::vec3 splitNormal(std::abs(eigvector(0)), std::abs(eigvector(1)), std::abs(eigvector(2)));
+            splitNormal = glm::normalize(splitNormal);
+            toFracture[tip] = splitNormal;
+            m_isCrackTip[tip] = false;
+            printf("Cracking at point %d!\n", tip);
+        }
+    }
+    // go through all the points to be fractured and do it
+    for(auto it = toFracture.begin(); it != toFracture.end(); it++) {
+        int tip = it->first;
+        glm::vec3 splitNormal = it->second;
+        // make a copy of the point which will be on the negative side of the fracture plane after frac
+
+
+        // now iterate through tets touching the point, separate into those on + side and those on - side
+        const std::unordered_set<glm::ivec2, ivec2_hash> *tetsTouching = &m_pToTMap[tip];
+        std::vector<glm::ivec2> plusSide, minusSide;
+        for(auto it = tetsTouching->begin(); it != tetsTouching->end(); it++) {
+            glm::ivec2 tup = *it;
+            int tetidx = tup.x;
+            tet_t tet = m_tets[tetidx];
+            if(glm::dot(splitNormal, getCenter(m_points, tet) - m_points[tip]) < 0) {
+                // behind plane, swap to other point
+                /*if(tet.p1 == tip)
+                    m_tets[tetidx].p1 = pminus;
+                if(tet.p2 == tip)
+                    m_tets[tetidx].p2 = pminus;
+                if(tet.p3 == tip)
+                    m_tets[tetidx].p3 = pminus;
+                if(tet.p4 == tip)
+                    m_tets[tetidx].p4 = pminus;
+                tetsTouching->erase(tetsTouching->begin() + i);
+                i--;
+                m_pToTMap[pminus].push_back(tetidx);*/
+                minusSide.push_back(tup);
+            }
+            else {
+                plusSide.push_back(tup);
+            }
+        }
+        if(minusSide.size() == 0 || plusSide.size() == 0)
+            continue;
+        int pminus = addNewPoint();
+        m_points[pminus] = m_points[tip];
+        m_vels[pminus] = m_vels[tip];
+        //m_vels[tip] += splitNormal / 2.f / 5000.f;
+        //m_vels[pminus] -= splitNormal / 2.f / 5000.f;
+        m_pointMasses[pminus] = m_pointMasses[tip] / 2;
+        m_pointMasses[tip] = m_pointMasses[pminus];
+        // now we have to find all pairs of tets on plus and minus side that share a face that includes
+        // the tip. This is really annoying; better way???
+        std::unordered_set<glm::ivec2, ivec2_hash> plusFaces;
+        for(long unsigned int i = 0; i < plusSide.size(); i++) {
+            glm::ivec2 tup = plusSide[i];
+            int tetidx = tup.x;
+            int pidx = tup.y;
+            tet_t ti = m_tets[tetidx];
+            assert(ti[pidx] == tip);
+
+            addTouchingFaces(plusFaces, ti, pidx);
+        }
+        for(unsigned long i = 0; i < minusSide.size(); i++) {
+            glm::ivec2 tup = minusSide[i];
+            int tetidx = tup.x;
+            int pidx = tup.y;
+            tet_t ti = m_tets[tetidx];
+            assert(ti[pidx] == tip);
+
+            markTouchingFaces(plusFaces, ti, pidx);
+            m_tets[tetidx][pidx] = pminus;
+            m_pToTMap[tip].erase(tup);
+            m_pToTMap[pminus].insert(tup);
+        }
+    }
+}
+
 void TetMesh::update(float timestep) {
-    // step 1: get all forces.
+    // step 1: compute all fractures.
+    computeFracturing();
 
     std::vector<glm::vec3> forces(m_points.size()),
             dxk1(m_points.size()),
@@ -509,6 +648,8 @@ bool setIfContains(std::unordered_map<glm::ivec3, bool, ivec3_hash>& map, glm::i
 #undef V
     return good;
 }
+
+
 
 void TetMesh::calcFacesAndNorms() {
     m_faces.clear();
