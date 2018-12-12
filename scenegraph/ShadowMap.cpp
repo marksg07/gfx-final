@@ -6,26 +6,6 @@
 std::unique_ptr<CS123::GL::FullScreenQuad> ShadowMap::fsq = nullptr;
 
 
-// From: http://ogldev.atspace.co.uk/www/tutorial43/tutorial43.html
-struct CameraDirection
-{
-    GLenum CubemapFace;
-    glm::vec3 Target;
-    glm::vec3 Up;
-};
-
-CameraDirection cameraDirections[6] =
-{
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_X, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_X, glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_Y, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f) },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f) },
-    { GL_TEXTURE_CUBE_MAP_POSITIVE_Z, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f) },
-    { GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f) }
-};
-
-
-
 ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<CS123::GL::Shader> shadowPointShader, std::shared_ptr<CS123::GL::Shader> dbg_shader, CS123SceneLightData light, SceneviewScene* scene)
     : m_shadowShader(shader), m_shadowPointShader(shadowPointShader), m_dbgShader(dbg_shader), m_light(light), m_scene(scene)
 {
@@ -51,11 +31,7 @@ ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<
     if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
         tex = std::make_shared<DepthTexture>(m_width, m_height);
         m_dfbo->attachTexture(tex);
-    } else if (m_light.type == LightType::LIGHT_POINT) {
-        tex = std::make_shared<DepthCubeTexture>(m_width, m_height);
     }
-
-
 }
 
 std::vector<glm::vec3> getFrustumPoints(glm::mat4 projection)

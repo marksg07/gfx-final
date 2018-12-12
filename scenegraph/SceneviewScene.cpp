@@ -126,7 +126,11 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     glCullFace(GL_BACK);
 
+
     m_phongShader->bind();
+
+    glm::mat4 inv = glm::inverse(context->getCamera()->getViewMatrix()) * glm::inverse(context->getCamera()->getScaleMatrix());
+    m_phongShader->setUniform("cameraPos", (inv * glm::vec4(0, 0, 0, 1)).xyz());
 
     for(size_t i = 0; i < m_lights.size(); i++)
     {

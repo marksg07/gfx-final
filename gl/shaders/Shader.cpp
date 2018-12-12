@@ -188,11 +188,11 @@ void Shader::setUniformArrayByIndex(const std::string &name, const glm::mat4 &ma
 void Shader::setTexture(const std::string &name, const Texture1D &t) {}
 
 void Shader::setTexture(const std::string &name, const Texture2D &t) {
-    std::cout << "bound!" << std::endl;
+    //std::cout << "bound!" << std::endl;
     GLint location = m_textureLocations[name];
     GLint slot = m_textureSlots[location];
 
-    std::cout << name << " : " << slot << " : " << location << std::endl;
+    //std::cout << name << " : " << slot << " : " << location << std::endl;
 
     glActiveTexture(GL_TEXTURE0 + slot);
     glUniform1i(location, slot);
@@ -208,7 +208,7 @@ void Shader::setTexture(const std::string &name, GLuint type, GLuint id) {
     GLint location = m_textureLocations[name];
     GLint slot = m_textureSlots[location];
 
-    std::cout << name << " : " << slot << " : " << location << " : " << id << std::endl;
+    //std::cout << name << " : " << slot << " : " << location << " : " << id << std::endl;
     glActiveTexture(GL_TEXTURE0 + slot);
 
     glBindTexture(type, id);
