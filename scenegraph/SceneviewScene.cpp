@@ -129,9 +129,6 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     m_phongShader->bind();
 
-    glm::mat4 inv = glm::inverse(context->getCamera()->getViewMatrix()) * glm::inverse(context->getCamera()->getScaleMatrix());
-    m_phongShader->setUniform("cameraPos", (inv * glm::vec4(0, 0, 0, 1)).xyz());
-
     for(size_t i = 0; i < m_lights.size(); i++)
     {
         m_shadowMaps[i]->prepareShader(m_phongShader.get(), "shadow", i);
@@ -149,9 +146,11 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     glDepthFunc(GL_LEQUAL);
     m_skyboxShader->bind();
 
+    //m_skybox->textureId()
+
     m_skyboxShader->setUniform("v", glm::mat4(glm::mat3(context->getCamera()->getViewMatrix())));
     m_skyboxShader->setUniform("p", context->getCamera()->getProjectionMatrix());
-    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_skybox->textureId());
+    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_shadowMaps[0]->m_dfbo->textureID());
 
     m_skybox->draw();
 

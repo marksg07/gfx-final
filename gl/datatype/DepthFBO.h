@@ -2,7 +2,7 @@
 #define DEPTHFBO_H
 
 #include <memory>
-#include "gl/textures/Texture.h"
+#include "gl/textures/DepthTexture.h"
 #include "GL/glew.h"
 
 class DepthFBO
@@ -23,7 +23,7 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void attachTexture(std::shared_ptr<CS123::GL::Texture> tex)
+    void attachTexture(std::shared_ptr<DepthTexture> tex)
     {
         m_depthTexture = tex;
 
@@ -41,15 +41,11 @@ public:
         return m_depthTexture->id();
     }
 
-    DepthFBO();
-
     size_t m_width, m_height;
 
     GLuint m_handle;
 
     std::shared_ptr<CS123::GL::Texture> m_depthTexture;
-
-    GLuint depthMapFBO, depthCubemap;
 };
 
 #endif // DEPTHFBO_H

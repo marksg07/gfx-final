@@ -1,18 +1,26 @@
 #ifndef DEPTHCUBETEXTURE_H
 #define DEPTHCUBETEXTURE_H
 
-#include "gl/textures/DepthTexture.h"
+#include "DepthTexture.h"
 
 class DepthCubeTexture : public DepthTexture
 {
 public:
+
+    void bind() const override {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, m_handle);
+    }
+
+    void unbind() const override {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    }
+
     DepthCubeTexture(size_t width, size_t height)
     {
-        glGenTextures(1, &m_handle);
-
         bind();
 
-        for (unsigned int i = 0; i < 6; i++) {
+        for (unsigned int i = 0; i < 6; i++)
+        {
             glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         }
 
@@ -24,18 +32,6 @@ public:
 
         unbind();
     }
-
-    void bind()
-    {
-        glBindTexture(GL_TEXTURE_CUBE_MAP, m_handle);
-    }
-
-    void unbind()
-    {
-        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-    }
-
 };
-
 
 #endif // DEPTHCUBETEXTURE_H

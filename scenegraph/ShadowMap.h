@@ -43,7 +43,7 @@ public:
             shader->setUniformArrayByIndex(base + "Mat", biasMVP(), i);
             shader->setTexture(base + "Map[" + std::to_string(i) + "]",  GL_TEXTURE_2D, textureID());
         } else if (m_light.type == LightType::LIGHT_POINT) {
-            shader->setTexture(base + "CubeMap[" + std::to_string(i) + "]",  GL_TEXTURE_CUBE_MAP, m_dfbo->depthCubemap);
+            shader->setTexture(base + "CubeMap[" + std::to_string(i) + "]",  GL_TEXTURE_CUBE_MAP, textureID());
         }
     }
 

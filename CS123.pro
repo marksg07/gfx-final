@@ -92,7 +92,8 @@ SOURCES += \
     gl/shaders/ShadowShader.cpp \
     gl/textures/DepthTexture.cpp \
     gl/datatype/DepthFBO.cpp \
-    scenegraph/CubeMap.cpp
+    scenegraph/CubeMap.cpp \
+    gl/textures/DepthCubeTexture.cpp
 
 
 HEADERS += \

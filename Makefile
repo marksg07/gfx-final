@@ -115,7 +115,8 @@ SOURCES       = brush/Brush.cpp \
 		gl/shaders/ShadowShader.cpp \
 		gl/textures/DepthTexture.cpp \
 		gl/datatype/DepthFBO.cpp \
-		scenegraph/CubeMap.cpp qrc_resources.cpp \
+		scenegraph/CubeMap.cpp \
+		gl/textures/DepthCubeTexture.cpp qrc_resources.cpp \
 		moc_Canvas2D.cpp \
 		moc_SupportCanvas2D.cpp \
 		moc_SupportCanvas3D.cpp \
@@ -193,6 +194,7 @@ OBJECTS       = Brush.o \
 		DepthTexture.o \
 		DepthFBO.o \
 		CubeMap.o \
+		DepthCubeTexture.o \
 		qrc_resources.o \
 		moc_Canvas2D.o \
 		moc_SupportCanvas2D.o \
@@ -579,7 +581,7 @@ qmake_all: FORCE
 
 dist: 
 	@test -d .tmp/CS1231.0.0 || mkdir -p .tmp/CS1231.0.0
-	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/CS1231.0.0/ && $(COPY_FILE) --parents resources.qrc .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.h brush/ConstantBrush.h brush/LinearBrush.h brush/QuadraticBrush.h brush/SmudgeBrush.h camera/Camera.h camera/OrbitingCamera.h camera/CamtransCamera.h camera/QuaternionCamera.h scenegraph/Scene.h scenegraph/OpenGLScene.h scenegraph/ShapesScene.h scenegraph/SceneviewScene.h scenegraph/RayScene.h ui/Canvas2D.h ui/SupportCanvas2D.h ui/SupportCanvas3D.h ui/Settings.h ui/mainwindow.h ui/Databinding.h ui_mainwindow.h gl/shaders/Shader.h gl/GLDebug.h gl/shaders/ShaderAttribLocations.h gl/datatype/VBOAttribMarker.h gl/datatype/VBO.h gl/datatype/IBO.h gl/datatype/VAO.h gl/datatype/FBO.h gl/textures/Texture.h gl/textures/Texture2D.h gl/textures/TextureParameters.h gl/textures/TextureParametersBuilder.h gl/textures/RenderBuffer.h gl/textures/DepthBuffer.h gl/shaders/CS123Shader.h gl/util/FullScreenQuad.h lib/BGRA.h lib/CS123XmlSceneParser.h lib/CS123SceneData.h lib/CS123ISceneParser.h lib/ResourceLoader.h glew-1.10.0/include/GL/glew.h brush/BrushManager.h brush/SnakeBrush.h brush/Snake.h brush/FoodBrush.h scenegraph/shapes/GLShape.h scenegraph/shapes/GLCube.h scenegraph/shapes/GLSphere.h scenegraph/shapes/GLVertex.h scenegraph/shapes/GLTriangle.h scenegraph/shapes/GLCone.h scenegraph/shapes/GLCylinder.h scenegraph/shapes/Utils.h scenegraph/Utils.h scenegraph/shapes/GLTorus.h scenegraph/shapes/GLCap.h scenegraph/shapes/GLTransformable.h filter/Filter.h filter/FilterEdge.h filter/FilterBlur.h filter/FilterUtils.h filter/Kernel.h filter/FilterScale.h filter/FilterRotate.h filter/FilterSharpen.h filter/FilterUnsharp.h scenegraph/Ray.h scenegraph/IlluminateData.h scenegraph/IntersectionManager.h scenegraph/ThreadPool.h scenegraph/KDTree.h scenegraph/ShadowMap.h gl/shaders/ShadowShader.h gl/textures/DepthTexture.h gl/datatype/DepthFBO.h gl/textures/DepthCubeTexture.h scenegraph/CubeMap.h .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.cpp brush/ConstantBrush.cpp brush/LinearBrush.cpp brush/QuadraticBrush.cpp brush/SmudgeBrush.cpp camera/OrbitingCamera.cpp camera/CamtransCamera.cpp camera/QuaternionCamera.cpp scenegraph/Scene.cpp scenegraph/OpenGLScene.cpp scenegraph/ShapesScene.cpp scenegraph/SceneviewScene.cpp scenegraph/RayScene.cpp ui/Canvas2D.cpp ui/SupportCanvas2D.cpp ui/SupportCanvas3D.cpp ui/Settings.cpp ui/mainwindow.cpp ui/Databinding.cpp lib/BGRA.cpp lib/CS123XmlSceneParser.cpp lib/ResourceLoader.cpp gl/shaders/Shader.cpp gl/GLDebug.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/IBO.cpp gl/datatype/FBO.cpp gl/textures/Texture.cpp gl/textures/Texture2D.cpp gl/textures/TextureParameters.cpp gl/textures/TextureParametersBuilder.cpp gl/textures/RenderBuffer.cpp gl/textures/DepthBuffer.cpp gl/shaders/CS123Shader.cpp gl/util/FullScreenQuad.cpp main.cpp glew-1.10.0/src/glew.c brush/BrushManager.cpp brush/SnakeBrush.cpp brush/Snake.cpp brush/FoodBrush.cpp gl/datatype/VAO.cpp gl/datatype/VBO.cpp scenegraph/shapes/GLShape.cpp scenegraph/shapes/GLCube.cpp scenegraph/shapes/GLSphere.cpp scenegraph/shapes/GLVertex.cpp scenegraph/shapes/GLTriangle.cpp scenegraph/shapes/GLCone.cpp scenegraph/shapes/GLCylinder.cpp scenegraph/Utils.cpp scenegraph/shapes/GLTorus.cpp scenegraph/shapes/GLCap.cpp scenegraph/shapes/GLTransformable.cpp filter/Filter.cpp filter/FilterEdge.cpp filter/FilterBlur.cpp filter/Kernel.cpp filter/FilterUtils.cpp filter/FilterScale.cpp filter/FilterRotate.cpp filter/FilterSharpen.cpp filter/FilterUnsharp.cpp scenegraph/IlluminateData.cpp scenegraph/IntersectionManager.cpp scenegraph/KDTree.cpp scenegraph/ShadowMap.cpp gl/shaders/ShadowShader.cpp gl/textures/DepthTexture.cpp gl/datatype/DepthFBO.cpp scenegraph/CubeMap.cpp .tmp/CS1231.0.0/ && $(COPY_FILE) --parents ui/mainwindow.ui .tmp/CS1231.0.0/ && (cd `dirname .tmp/CS1231.0.0` && $(TAR) CS1231.0.0.tar CS1231.0.0 && $(COMPRESS) CS1231.0.0.tar) && $(MOVE) `dirname .tmp/CS1231.0.0`/CS1231.0.0.tar.gz . && $(DEL_FILE) -r .tmp/CS1231.0.0
+	$(COPY_FILE) --parents $(SOURCES) $(DIST) .tmp/CS1231.0.0/ && $(COPY_FILE) --parents resources.qrc .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.h brush/ConstantBrush.h brush/LinearBrush.h brush/QuadraticBrush.h brush/SmudgeBrush.h camera/Camera.h camera/OrbitingCamera.h camera/CamtransCamera.h camera/QuaternionCamera.h scenegraph/Scene.h scenegraph/OpenGLScene.h scenegraph/ShapesScene.h scenegraph/SceneviewScene.h scenegraph/RayScene.h ui/Canvas2D.h ui/SupportCanvas2D.h ui/SupportCanvas3D.h ui/Settings.h ui/mainwindow.h ui/Databinding.h ui_mainwindow.h gl/shaders/Shader.h gl/GLDebug.h gl/shaders/ShaderAttribLocations.h gl/datatype/VBOAttribMarker.h gl/datatype/VBO.h gl/datatype/IBO.h gl/datatype/VAO.h gl/datatype/FBO.h gl/textures/Texture.h gl/textures/Texture2D.h gl/textures/TextureParameters.h gl/textures/TextureParametersBuilder.h gl/textures/RenderBuffer.h gl/textures/DepthBuffer.h gl/shaders/CS123Shader.h gl/util/FullScreenQuad.h lib/BGRA.h lib/CS123XmlSceneParser.h lib/CS123SceneData.h lib/CS123ISceneParser.h lib/ResourceLoader.h glew-1.10.0/include/GL/glew.h brush/BrushManager.h brush/SnakeBrush.h brush/Snake.h brush/FoodBrush.h scenegraph/shapes/GLShape.h scenegraph/shapes/GLCube.h scenegraph/shapes/GLSphere.h scenegraph/shapes/GLVertex.h scenegraph/shapes/GLTriangle.h scenegraph/shapes/GLCone.h scenegraph/shapes/GLCylinder.h scenegraph/shapes/Utils.h scenegraph/Utils.h scenegraph/shapes/GLTorus.h scenegraph/shapes/GLCap.h scenegraph/shapes/GLTransformable.h filter/Filter.h filter/FilterEdge.h filter/FilterBlur.h filter/FilterUtils.h filter/Kernel.h filter/FilterScale.h filter/FilterRotate.h filter/FilterSharpen.h filter/FilterUnsharp.h scenegraph/Ray.h scenegraph/IlluminateData.h scenegraph/IntersectionManager.h scenegraph/ThreadPool.h scenegraph/KDTree.h scenegraph/ShadowMap.h gl/shaders/ShadowShader.h gl/textures/DepthTexture.h gl/datatype/DepthFBO.h gl/textures/DepthCubeTexture.h scenegraph/CubeMap.h .tmp/CS1231.0.0/ && $(COPY_FILE) --parents brush/Brush.cpp brush/ConstantBrush.cpp brush/LinearBrush.cpp brush/QuadraticBrush.cpp brush/SmudgeBrush.cpp camera/OrbitingCamera.cpp camera/CamtransCamera.cpp camera/QuaternionCamera.cpp scenegraph/Scene.cpp scenegraph/OpenGLScene.cpp scenegraph/ShapesScene.cpp scenegraph/SceneviewScene.cpp scenegraph/RayScene.cpp ui/Canvas2D.cpp ui/SupportCanvas2D.cpp ui/SupportCanvas3D.cpp ui/Settings.cpp ui/mainwindow.cpp ui/Databinding.cpp lib/BGRA.cpp lib/CS123XmlSceneParser.cpp lib/ResourceLoader.cpp gl/shaders/Shader.cpp gl/GLDebug.cpp gl/datatype/VBOAttribMarker.cpp gl/datatype/IBO.cpp gl/datatype/FBO.cpp gl/textures/Texture.cpp gl/textures/Texture2D.cpp gl/textures/TextureParameters.cpp gl/textures/TextureParametersBuilder.cpp gl/textures/RenderBuffer.cpp gl/textures/DepthBuffer.cpp gl/shaders/CS123Shader.cpp gl/util/FullScreenQuad.cpp main.cpp glew-1.10.0/src/glew.c brush/BrushManager.cpp brush/SnakeBrush.cpp brush/Snake.cpp brush/FoodBrush.cpp gl/datatype/VAO.cpp gl/datatype/VBO.cpp scenegraph/shapes/GLShape.cpp scenegraph/shapes/GLCube.cpp scenegraph/shapes/GLSphere.cpp scenegraph/shapes/GLVertex.cpp scenegraph/shapes/GLTriangle.cpp scenegraph/shapes/GLCone.cpp scenegraph/shapes/GLCylinder.cpp scenegraph/Utils.cpp scenegraph/shapes/GLTorus.cpp scenegraph/shapes/GLCap.cpp scenegraph/shapes/GLTransformable.cpp filter/Filter.cpp filter/FilterEdge.cpp filter/FilterBlur.cpp filter/Kernel.cpp filter/FilterUtils.cpp filter/FilterScale.cpp filter/FilterRotate.cpp filter/FilterSharpen.cpp filter/FilterUnsharp.cpp scenegraph/IlluminateData.cpp scenegraph/IntersectionManager.cpp scenegraph/KDTree.cpp scenegraph/ShadowMap.cpp gl/shaders/ShadowShader.cpp gl/textures/DepthTexture.cpp gl/datatype/DepthFBO.cpp scenegraph/CubeMap.cpp gl/textures/DepthCubeTexture.cpp .tmp/CS1231.0.0/ && $(COPY_FILE) --parents ui/mainwindow.ui .tmp/CS1231.0.0/ && (cd `dirname .tmp/CS1231.0.0` && $(TAR) CS1231.0.0.tar CS1231.0.0 && $(COMPRESS) CS1231.0.0.tar) && $(MOVE) `dirname .tmp/CS1231.0.0`/CS1231.0.0.tar.gz . && $(DEL_FILE) -r .tmp/CS1231.0.0
 
 
 clean:compiler_clean 
@@ -604,36 +606,36 @@ compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: resources.qrc \
+		shaders/shadowPoint.frag \
+		shaders/wireframe/wireframe.vert \
+		shaders/normals/normals.vert \
+		shaders/normals/normalsArrow.vert \
+		shaders/fullscreenquad/fullscreenquad.vert \
+		shaders/skybox.frag \
+		shaders/shadow.vert \
+		shaders/shadow_map.frag \
+		shaders/shadowPoint.gsh \
+		shaders/test/shader.vert \
+		shaders/texture.frag \
+		shaders/shader.vert \
+		shaders/shadowPoint.vert \
+		shaders/wireframe/wireframe.frag \
+		shaders/normals/normals.frag \
+		shaders/normals/normalsArrow.frag \
+		shaders/normals/normalsArrow.gsh \
+		shaders/fullscreenquad/fullscreenquad.frag \
+		shaders/shadow.frag \
+		shaders/normals/normals.gsh \
+		shaders/test/shader.frag \
+		shaders/skybox.vert \
+		shaders/shadow_map.vert \
+		shaders/shader.frag \
 		resources/skybox/front.jpg \
 		resources/skybox/right.jpg \
-		resources/skybox/top.jpg \
 		resources/skybox/back.jpg \
 		resources/skybox/bottom.jpg \
 		resources/skybox/left.jpg \
-		shaders/normals/normalsArrow.gsh \
-		shaders/wireframe/wireframe.frag \
-		shaders/normals/normalsArrow.frag \
-		shaders/test/shader.vert \
-		shaders/texture.frag \
-		shaders/fullscreenquad/fullscreenquad.frag \
-		shaders/shadowPoint.frag \
-		shaders/skybox.frag \
-		shaders/shader.vert \
-		shaders/shadow.vert \
-		shaders/normals/normals.frag \
-		shaders/shadow_map.vert \
-		shaders/normals/normalsArrow.vert \
-		shaders/test/shader.frag \
-		shaders/wireframe/wireframe.vert \
-		shaders/fullscreenquad/fullscreenquad.vert \
-		shaders/shadowPoint.vert \
-		shaders/shader.frag \
-		shaders/shadow.frag \
-		shaders/normals/normals.gsh \
-		shaders/shadow_map.frag \
-		shaders/shadowPoint.gsh \
-		shaders/skybox.vert \
-		shaders/normals/normals.vert
+		resources/skybox/top.jpg
 	/home/ethan/Qt5.2.0/5.2.0/gcc_64/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_Canvas2D.cpp moc_SupportCanvas2D.cpp moc_SupportCanvas3D.cpp moc_mainwindow.cpp moc_Databinding.cpp moc_Snake.cpp
@@ -3291,6 +3293,7 @@ SceneviewScene.o: scenegraph/SceneviewScene.cpp scenegraph/SceneviewScene.h \
 		scenegraph/ShadowMap.h \
 		gl/textures/DepthTexture.h \
 		gl/datatype/DepthFBO.h \
+		scenegraph/CubeMap.h \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/QGuiApplication \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qguiapplication.h \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qcoreapplication.h \
@@ -4198,6 +4201,7 @@ SupportCanvas3D.o: ui/SupportCanvas3D.cpp ../Qt5.2.0/5.2.0/gcc_64/include/QtWidg
 		scenegraph/ShadowMap.h \
 		gl/textures/DepthTexture.h \
 		gl/datatype/DepthFBO.h \
+		scenegraph/CubeMap.h \
 		ui/Settings.h \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/QObject \
 		scenegraph/ShapesScene.h \
@@ -4839,6 +4843,7 @@ mainwindow.o: ui/mainwindow.cpp ui/mainwindow.h \
 		scenegraph/ShadowMap.h \
 		gl/textures/DepthTexture.h \
 		gl/datatype/DepthFBO.h \
+		scenegraph/CubeMap.h \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtWidgets/QFileDialog \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtWidgets/qfiledialog.h \
 		../Qt5.2.0/5.2.0/gcc_64/include/QtWidgets/qdialog.h \
@@ -9939,6 +9944,7 @@ ShadowMap.o: scenegraph/ShadowMap.cpp scenegraph/ShadowMap.h \
 		gl/datatype/FBO.h \
 		gl/util/FullScreenQuad.h \
 		gl/datatype/VAO.h \
+		scenegraph/CubeMap.h \
 		gl/textures/DepthTexture.h \
 		gl/datatype/DepthFBO.h \
 		ui/Settings.h \
@@ -10044,17 +10050,220 @@ DepthTexture.o: gl/textures/DepthTexture.cpp gl/textures/DepthTexture.h \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DepthTexture.o gl/textures/DepthTexture.cpp
 
 DepthFBO.o: gl/datatype/DepthFBO.cpp gl/datatype/DepthFBO.h \
+		gl/textures/DepthTexture.h \
+		gl/textures/Texture2D.h \
 		gl/textures/Texture.h \
 		glew-1.10.0/include/GL/glew.h \
 		gl/textures/TextureParametersBuilder.h \
-		gl/textures/TextureParameters.h \
-		gl/textures/DepthTexture.h \
-		gl/textures/Texture2D.h
+		gl/textures/TextureParameters.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DepthFBO.o gl/datatype/DepthFBO.cpp
 
 CubeMap.o: scenegraph/CubeMap.cpp scenegraph/CubeMap.h \
-		glew-1.10.0/include/GL/glew.h
+		glew-1.10.0/include/GL/glew.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/QImage \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qimage.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qtransform.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qmatrix.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpolygon.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qvector.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qalgorithms.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qglobal.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qconfig.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qfeatures.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qsystemdetection.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qprocessordetection.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qcompilerdetection.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qglobalstatic.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qbasicatomic.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qgenericatomic.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_msvc.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_integrity.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qoldbasicatomic.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_vxworks.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_power.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_alpha.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_armv7.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_armv6.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_armv5.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_bfin.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_ia64.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_mips.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_s390.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_sh4a.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_sparc.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_x86.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_gcc.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qatomic_unix.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qmutex.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qlogging.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qflags.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qtypeinfo.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qtypetraits.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qsysinfo.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qiterator.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qlist.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qrefcount.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qarraydata.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qpoint.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qnamespace.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qrect.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qsize.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qregion.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qwindowdefs.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qobjectdefs.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qwindowdefs_win.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qdatastream.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qscopedpointer.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qiodevice.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qobject.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qstring.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qchar.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qbytearray.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qstringbuilder.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qcoreevent.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qmetatype.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qvarlengtharray.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qcontainerfwd.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qisenum.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qobject_impl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qpair.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qline.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpainterpath.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpaintdevice.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qrgb.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qstringlist.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qregexp.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qstringmatcher.h \
+		gl/shaders/Shader.h \
+		glm/glm.hpp \
+		glm/detail/_fixes.hpp \
+		glm/fwd.hpp \
+		glm/detail/type_int.hpp \
+		glm/detail/setup.hpp \
+		glm/detail/type_float.hpp \
+		glm/detail/type_vec.hpp \
+		glm/detail/precision.hpp \
+		glm/detail/type_mat.hpp \
+		glm/vec2.hpp \
+		glm/detail/type_vec2.hpp \
+		glm/detail/_swizzle.hpp \
+		glm/detail/_swizzle_func.hpp \
+		glm/detail/type_vec2.inl \
+		glm/vec3.hpp \
+		glm/detail/type_vec3.hpp \
+		glm/detail/type_vec3.inl \
+		glm/vec4.hpp \
+		glm/detail/type_vec4.hpp \
+		glm/detail/type_vec4.inl \
+		glm/mat2x2.hpp \
+		glm/detail/type_mat2x2.hpp \
+		glm/detail/type_mat2x2.inl \
+		glm/mat2x3.hpp \
+		glm/detail/type_mat2x3.hpp \
+		glm/detail/type_mat2x3.inl \
+		glm/mat2x4.hpp \
+		glm/detail/type_mat2x4.hpp \
+		glm/detail/type_mat2x4.inl \
+		glm/mat3x2.hpp \
+		glm/detail/type_mat3x2.hpp \
+		glm/detail/type_mat3x2.inl \
+		glm/mat3x3.hpp \
+		glm/detail/type_mat3x3.hpp \
+		glm/detail/type_mat3x3.inl \
+		glm/mat3x4.hpp \
+		glm/detail/type_mat3x4.hpp \
+		glm/detail/type_mat3x4.inl \
+		glm/mat4x2.hpp \
+		glm/detail/type_mat4x2.hpp \
+		glm/detail/type_mat4x2.inl \
+		glm/mat4x3.hpp \
+		glm/detail/type_mat4x3.hpp \
+		glm/detail/type_mat4x3.inl \
+		glm/mat4x4.hpp \
+		glm/detail/type_mat4x4.hpp \
+		glm/detail/type_mat4x4.inl \
+		glm/trigonometric.hpp \
+		glm/detail/func_trigonometric.hpp \
+		glm/detail/func_trigonometric.inl \
+		glm/detail/_vectorize.hpp \
+		glm/detail/type_vec1.hpp \
+		glm/detail/type_vec1.inl \
+		glm/exponential.hpp \
+		glm/detail/func_exponential.hpp \
+		glm/detail/func_exponential.inl \
+		glm/detail/func_vector_relational.hpp \
+		glm/detail/func_vector_relational.inl \
+		glm/common.hpp \
+		glm/detail/func_common.hpp \
+		glm/detail/func_common.inl \
+		glm/packing.hpp \
+		glm/detail/func_packing.hpp \
+		glm/detail/func_packing.inl \
+		glm/detail/type_half.hpp \
+		glm/detail/type_half.inl \
+		glm/geometric.hpp \
+		glm/detail/func_geometric.hpp \
+		glm/detail/func_geometric.inl \
+		glm/matrix.hpp \
+		glm/detail/func_matrix.hpp \
+		glm/detail/func_matrix.inl \
+		glm/vector_relational.hpp \
+		glm/integer.hpp \
+		glm/detail/func_integer.hpp \
+		glm/detail/func_integer.inl \
+		lib/ResourceLoader.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtOpenGL/QGLWidget \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtOpenGL/qgl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qopengl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qt_windows.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qopengles2ext.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qopenglext.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtWidgets/qwidget.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qmargins.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpalette.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qcolor.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qbrush.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpixmap.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qsharedpointer.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qshareddata.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qhash.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qfont.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qfontmetrics.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qfontinfo.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtWidgets/qsizepolicy.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qcursor.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qkeysequence.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qevent.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qvariant.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qmap.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qdebug.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qtextstream.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qlocale.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qset.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qcontiguouscache.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qurl.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qurlquery.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qfile.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtCore/qfiledevice.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qvector2d.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qtouchdevice.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpaintengine.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpainter.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qtextoption.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qpen.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtOpenGL/qglcolormap.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtOpenGL/qtopenglglobal.h \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/QSurfaceFormat \
+		../Qt5.2.0/5.2.0/gcc_64/include/QtGui/qsurfaceformat.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o CubeMap.o scenegraph/CubeMap.cpp
+
+DepthCubeTexture.o: gl/textures/DepthCubeTexture.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o DepthCubeTexture.o gl/textures/DepthCubeTexture.cpp
 
 qrc_resources.o: qrc_resources.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_resources.o qrc_resources.cpp

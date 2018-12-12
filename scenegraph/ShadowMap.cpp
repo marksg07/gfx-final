@@ -30,8 +30,11 @@ ShadowMap::ShadowMap(std::shared_ptr<CS123::GL::Shader> shader, std::shared_ptr<
     std::shared_ptr<DepthTexture> tex;
     if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
         tex = std::make_shared<DepthTexture>(m_width, m_height);
-        m_dfbo->attachTexture(tex);
+    } else if (m_light.type == LightType::LIGHT_POINT) {
+        tex = std::make_shared<DepthCubeTexture>(m_width, m_height);
     }
+
+    m_dfbo->attachTexture(tex);
 }
 
 std::vector<glm::vec3> getFrustumPoints(glm::mat4 projection)
@@ -134,12 +137,6 @@ void ShadowMap::renderPoint(Camera* camera)
 {
     float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
 
-    // camera FOV?
-    glm::mat4 p = glm::perspective(settings.cameraFov, ratio, settings.cameraNear, settings.cameraFar);
-
-    //m_dfbo->bind();
-
-
     float near_plane = 1.0f;
     float far_plane  = 25.0f;
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)1024 / (float)1024, near_plane, far_plane);
@@ -155,22 +152,22 @@ void ShadowMap::renderPoint(Camera* camera)
 
     // 1. render scene to depth cubemap
     // --------------------------------
-    glViewport(0, 0, 1024, 1024);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_dfbo->depthMapFBO);
+    //glViewport(0, 0, 1024, 1024);
+    //glBindFramebuffer(GL_FRAMEBUFFER, m_dfbo->depthMapFBO);
+
+    m_dfbo->bind();
+    m_shadowPointShader->bind();
+
     glClear(GL_DEPTH_BUFFER_BIT);
 
-
-    m_shadowPointShader->bind();
     for (unsigned int i = 0; i < 6; ++i)
         m_shadowPointShader->setUniformArrayByIndex("shadowMatrices", shadowTransforms[i], i);
 
     //simpleDepthShader.setFloat("far_plane", far_plane);
     m_shadowPointShader->setUniform("lightPos", lightPos);
     m_scene->renderGeometry(m_shadowPointShader.get());
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
-    //m_dfbo->unbind();
+    m_dfbo->unbind();
 
     m_shadowPointShader->unbind();
 }
