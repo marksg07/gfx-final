@@ -6,7 +6,7 @@ in vec2 uv;
 
 const int MAX_LIGHTS = 10;
 
-uniform sampler2D shadowMap[MAX_LIGHTS];
+uniform sampler2DShadow shadowMap[MAX_LIGHTS];
 uniform mat4 shadowMat[MAX_LIGHTS];
 uniform samplerCube shadowCubeMap[MAX_LIGHTS];
 // Light data
@@ -76,7 +76,7 @@ vec2 poissonDisk2[16] = vec2[](
             vec2(0.0466257f, 0.262733f),
             vec2(0.646728f, 0.665895f));
 
-vec3 poissonDisk3[16] = vec3[] (
+vec3 poissonDisk3[] = vec3[] (
         vec3(0.802456f, 0.679957f, 0.145147f),
         vec3(0.248366f, 0.147665f, 0.824477f),
         vec3(0.857692f, 0.687459f, 0.663825f),
@@ -93,38 +93,38 @@ vec3 poissonDisk3[16] = vec3[] (
         vec3(0.581023f, 0.0125562f, 0.646484f),
         vec3(0.0114362f, 0.59184f, 0.979364f),
         vec3(0.992244f, 0.220386f, 0.508227f));
+int poissonDisk3Samples = 16;
 
 
-float ShadowCalculation(vec3 fragToLight, int i)
+float dirShadow(vec4 vertexToLight, int i)
 {
-    // ise the fragment to light vector to sample from the depth map
-    float far_plane = 25.0f;
+    float visibility = 1.0;
 
-    /*//float closestDepth = texture(shadowCubeMap[i], fragToLight).r;
-    // it is currently in linear range between [0,1], let's re-transform it back to original depth value
-    closestDepth *= far_plane;
-    // now get current linear depth as the length between the fragment and light position
-    float currentDepth = length(fragToLight);
-    // test for shadows
-    float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
-    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
-    // display closestDepth as debug (to visualize depth cubemap)
-    // FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
-
-*/
-    float currentDepth = length(fragToLight);
-
-    float vis = 1.0;
+    bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0.0, 0.01);
+    vec4 shadowCoord = shadowMat[i] * m * obj_position;
     for (int s = 0; s < 16; s++){
+        visibility -= (.8 / 16) *(1.0-(texture(shadowMap[i], vec3(shadowCoord.xy + poissonDisk2[s]/700.0, (shadowCoord.z-bias)/shadowCoord.w))));
+    }
+
+    return visibility;
+}
+
+float pointShadow(vec3 fragToLight, int i)
+{
+    float far_plane = 25.0f;
+    float currentDepth = length(fragToLight);
+
+    float visibility = 1.0;
+    for (int s = 0; s < poissonDisk3Samples; s++){
         float closestDepth = texture(shadowCubeMap[i], fragToLight + poissonDisk3[s] / 700.0).r;
         closestDepth *= far_plane;
 
         float bias = 0.05;
         if (currentDepth - bias > closestDepth) {
-            vis -= (0.8 / 16);
+            visibility -= (0.8 / poissonDisk3Samples);
         }
     }
-    return vis;
+    return visibility;
 
 }
 
@@ -159,27 +159,14 @@ void main() {
             if (lightTypes[i] == 0) {
                 vertexToLight = normalize(v * vec4(lightPositions[i], 1) - position_cameraSpace);
 
-                float shadow = ShadowCalculation(((m * obj_position).xyz - lightPositions[i]), i);
-                visibility = shadow;
+                visibility = pointShadow(((m * obj_position).xyz - lightPositions[i]), i);
 
             } else if (lightTypes[i] == 1) {
                 // Dir Light
 
                 vertexToLight = normalize(v * vec4(-lightDirections[i], 0));
 
-
-                bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0.0, 0.01);
-                vec4 shadowCoord = shadowMat[i] * m * obj_position;
-                /*if (texture(shadowMap[i], shadowCoord.xy).r < shadowCoord.z - bias) {
-                    visibility = 0.5;
-                } else {
-                     visibility = 1.0;
-                }*/
-                for (int s = 0; s < 16; s++){
-                    if (texture(shadowMap[i], shadowCoord.xy + poissonDisk2[s] / 700.0).r < shadowCoord.z - bias) {
-                        visibility -= (0.8 / 16);
-                    }
-                }
+                visibility = dirShadow(vertexToLight, i);
 
             }
 

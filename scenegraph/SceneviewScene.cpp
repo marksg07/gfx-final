@@ -45,7 +45,6 @@ SceneviewScene::SceneviewScene(size_t w, size_t h)
 
     m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
 
-
     m_first = true;
 }
 

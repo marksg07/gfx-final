@@ -606,36 +606,36 @@ compiler_rcc_make_all: qrc_resources.cpp
 compiler_rcc_clean:
 	-$(DEL_FILE) qrc_resources.cpp
 qrc_resources.cpp: resources.qrc \
-		shaders/shadowPoint.frag \
-		shaders/wireframe/wireframe.vert \
-		shaders/normals/normals.vert \
-		shaders/normals/normalsArrow.vert \
-		shaders/fullscreenquad/fullscreenquad.vert \
-		shaders/skybox.frag \
-		shaders/shadow.vert \
-		shaders/shadow_map.frag \
-		shaders/shadowPoint.gsh \
-		shaders/test/shader.vert \
-		shaders/texture.frag \
-		shaders/shader.vert \
-		shaders/shadowPoint.vert \
-		shaders/wireframe/wireframe.frag \
-		shaders/normals/normals.frag \
-		shaders/normals/normalsArrow.frag \
-		shaders/normals/normalsArrow.gsh \
-		shaders/fullscreenquad/fullscreenquad.frag \
-		shaders/shadow.frag \
-		shaders/normals/normals.gsh \
-		shaders/test/shader.frag \
-		shaders/skybox.vert \
-		shaders/shadow_map.vert \
-		shaders/shader.frag \
-		resources/skybox/front.jpg \
 		resources/skybox/right.jpg \
 		resources/skybox/back.jpg \
-		resources/skybox/bottom.jpg \
+		resources/skybox/top.jpg \
 		resources/skybox/left.jpg \
-		resources/skybox/top.jpg
+		resources/skybox/bottom.jpg \
+		resources/skybox/front.jpg \
+		shaders/shadowPoint.frag \
+		shaders/skybox.frag \
+		shaders/shadow.vert \
+		shaders/shader.frag \
+		shaders/wireframe/wireframe.frag \
+		shaders/fullscreenquad/fullscreenquad.frag \
+		shaders/shadow_map.frag \
+		shaders/shadowPoint.gsh \
+		shaders/normals/normals.vert \
+		shaders/normals/normalsArrow.vert \
+		shaders/test/shader.vert \
+		shaders/texture.frag \
+		shaders/shadow.frag \
+		shaders/normals/normals.gsh \
+		shaders/shadowPoint.vert \
+		shaders/skybox.vert \
+		shaders/shader.vert \
+		shaders/wireframe/wireframe.vert \
+		shaders/fullscreenquad/fullscreenquad.vert \
+		shaders/normals/normalsArrow.gsh \
+		shaders/shadow_map.vert \
+		shaders/normals/normals.frag \
+		shaders/test/shader.frag \
+		shaders/normals/normalsArrow.frag
 	/home/ethan/Qt5.2.0/5.2.0/gcc_64/bin/rcc -name resources resources.qrc -o qrc_resources.cpp
 
 compiler_moc_header_make_all: moc_Canvas2D.cpp moc_SupportCanvas2D.cpp moc_SupportCanvas3D.cpp moc_mainwindow.cpp moc_Databinding.cpp moc_Snake.cpp
