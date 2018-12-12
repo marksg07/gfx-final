@@ -1,6 +1,7 @@
 #ifndef TEXTURE2D_H
 #define TEXTURE2D_H
 
+#include <iostream>
 #include "Texture.h"
 
 #include "GL/glew.h"
@@ -13,6 +14,10 @@ public:
 
     virtual void bind() const override;
     virtual void unbind() const override;
+
+protected:
+    Texture2D() {
+    }
 };
 
 }}

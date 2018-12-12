@@ -1,4 +1,4 @@
-#include "GLDebug.h"
+#include "gl/GLDebug.h"
 
 #include <iostream>
 #include <vector>

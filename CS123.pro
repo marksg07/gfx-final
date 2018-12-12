@@ -65,7 +65,12 @@ SOURCES += \
     intersect/kdtree.cpp \
     shapes/tetmesh.cpp \
     shapes/tetmeshparser.cpp \
-    shapes/timing.cpp
+    shapes/timing.cpp \
+    gl/textures/DepthCubeTexture.cpp \
+    gl/textures/DepthTexture.cpp \
+    scenegraph/CubeMap.cpp \
+    scenegraph/ShadowMap.cpp \
+    gl/datatype/DepthFBO.cpp
 
 HEADERS += \
     camera/Camera.h \
@@ -112,7 +117,12 @@ HEADERS += \
     shapes/tetmesh.h \
     tetgen/tetgen.h \
     shapes/tetmeshparser.h \
-    shapes/timing.h
+    shapes/timing.h \
+    gl/textures/DepthCubeTexture.h \
+    gl/textures/DepthTexture.h \
+    scenegraph/CubeMap.h \
+    scenegraph/ShadowMap.h \
+    gl/datatype/DepthFBO.h
 
 
 FORMS += ui/mainwindow.ui
@@ -136,7 +146,21 @@ OTHER_FILES += shaders/shader.frag \
     shaders/deferredlighting/lighting/lighting.frag \
     shaders/deferredlighting/lighting/lighting.vert \
     shaders/deferredlighting/compositing/compositing.frag \
-    shaders/deferredlighting/compositing/compositing.vert
+    shaders/deferredlighting/compositing/compositing.vert \
+    shaders/fullscreenquad/fullscreenquad.frag \
+    shaders/fullscreenquad/fullscreenquad.vert \
+    shaders/shadowPoint.gsh \
+    shaders/shadow_map.frag \
+    shaders/shadow.frag \
+    shaders/shadowPoint.frag \
+    shaders/skybox.frag \
+    shaders/solid.frag \
+    shaders/texture.frag \
+    shaders/shadow_map.vert \
+    shaders/shadow.vert \
+    shaders/shadowPoint.vert \
+    shaders/skybox.vert \
+    shaders/solid.vert
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2

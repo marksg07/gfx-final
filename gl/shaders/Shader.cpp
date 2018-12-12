@@ -121,6 +121,7 @@ void Shader::setUniform(const std::string &name, const glm::mat3 &mat3) {
 }
 
 void Shader::setUniform(const std::string &name, const glm::mat4 &mat4) {
+    //std::cout << "setuni: " << name << " : " << m_uniforms[name] << std::endl;
     glUniformMatrix4fv(m_uniforms[name], 1, GL_FALSE, glm::value_ptr(mat4));
 }
 
@@ -187,8 +188,12 @@ void Shader::setUniformArrayByIndex(const std::string &name, const glm::mat4 &ma
 void Shader::setTexture(const std::string &name, const Texture1D &t) {}
 
 void Shader::setTexture(const std::string &name, const Texture2D &t) {
+    //std::cout << "bound!" << std::endl;
     GLint location = m_textureLocations[name];
     GLint slot = m_textureSlots[location];
+
+    //std::cout << name << " : " << slot << " : " << location << std::endl;
+
     glActiveTexture(GL_TEXTURE0 + slot);
     glUniform1i(location, slot);
     t.bind();
@@ -197,6 +202,20 @@ void Shader::setTexture(const std::string &name, const Texture2D &t) {
 void Shader::setTexture(const std::string &name, const Texture3D &t) {}
 
 void Shader::setTexture(const std::string &name, const TextureCube &t) {}
+
+
+void Shader::setTexture(const std::string &name, GLuint type, GLuint id) {
+    GLint location = m_textureLocations[name];
+    GLint slot = m_textureSlots[location];
+
+    //std::cout << name << " : " << slot << " : " << location << " : " << id << std::endl;
+    glActiveTexture(GL_TEXTURE0 + slot);
+
+    glBindTexture(type, id);
+    glUniform1i(location, slot);
+    glActiveTexture(GL_TEXTURE0);
+
+}
 
 void Shader::attachShaders(const std::vector<GLuint> &shaders) {
     std::for_each(shaders.begin(), shaders.end(), [this](int s){ glAttachShader(m_programID, s); });
@@ -268,6 +287,9 @@ void Shader::discoverAttributes() {
         GLchar name[bufSize];
         glGetActiveAttrib(m_programID, i, bufSize, &nameLength, &arraySize, &type, name);
         name[std::min(nameLength, bufSize - 1)] = 0;
+
+          std::cout << "found[" << m_programID << "]: " << name << std::endl;
+
         m_attributes[std::string(name)] = glGetAttribLocation(m_programID, name);
     }
     unbind();
@@ -287,11 +309,23 @@ void Shader::discoverUniforms() {
         name[std::min(nameLength, bufSize - 1)] = 0;
 
         std::string strname(name);
+
+        std::cout << "found[" << m_programID << "]: " << strname << "(" << i << ")" << std::endl;
+
         if (isUniformArray(name, nameLength)) {
-            addUniformArray(strname, arraySize);
+            std::cout << name << " : " << type << std::endl;
+            // hack
+            if (strname.find("shadowMap[") != std::string::npos || strname.find("shadowCubeMap[") != std::string::npos)
+            {
+                addTextureArray(strname, arraySize);
+            } else {
+                addUniformArray(strname, arraySize);
+            }
         } else if (isTexture(type)) {
+            std::cout << "texture: " << strname << std::endl;
             addTexture(strname);
         } else {
+            std::cout << "uniform: " << strname << "(" << type << ")" << std::endl;
             addUniform(strname);
         }
     }
@@ -316,9 +350,22 @@ void Shader::addUniformArray(const std::string &name, size_t size) {
         std::string enumeratedName = name;
         enumeratedName[enumeratedName.length() - 2] = static_cast<char>('0' + i);
         std::tuple< std::string, size_t > nameIndexTuple = std::make_tuple(cleanName, i);
+        std::cout << enumeratedName << " : " << glGetUniformLocation(m_programID, enumeratedName.c_str()) << std::endl;
         m_uniformArrays[nameIndexTuple] = glGetUniformLocation(m_programID, enumeratedName.c_str());
     }
 }
+
+void Shader::addTextureArray(const std::string &name, size_t size) {
+
+    std::cout << "texArray: " << name << "(" << size << ")" << std::endl;
+    std::string cleanName = name.substr(0, name.length() - 3);
+    for (auto i = static_cast<size_t>(0); i < size; i++) {
+        std::string enumeratedName = name;
+        enumeratedName[enumeratedName.length() - 2] = static_cast<char>('0' + i);
+        addTexture(enumeratedName);
+    }
+}
+
 
 void Shader::addTexture(const std::string &name) {
     GLint location = glGetUniformLocation(m_programID, name.c_str());

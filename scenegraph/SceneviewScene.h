@@ -6,6 +6,10 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
+#include <mutex>
+#include "gl/util/FullScreenQuad.h"
+#include "CubeMap.h"
+#include "ShadowMap.h"
 #include "shapes/tetmesh.h"
 namespace CS123 { namespace GL {
 
@@ -13,6 +17,8 @@ namespace CS123 { namespace GL {
     class CS123Shader;
     class Texture2D;
 }}
+
+class ShadowMap;
 
 /**
  *
@@ -59,17 +65,24 @@ public:
 
     }
 
+
+    void renderGeometry(CS123::GL::Shader* shader);
+
 private:
 
 
 private:
-
     void loadPhongShader();
     void loadWireframeShader();
     void loadNormalsShader();
     void loadNormalsArrowShader();
+    void loadFragShader();
+    void loadShadowShader();
+    void loadShadowMapShader();
+    void loadShadowPointShader();
+    void loadSkyboxShader();
 
-    void setSceneUniforms(SupportCanvas3D *context);\
+    void setSceneUniforms(SupportCanvas3D *context);
     void setMatrixUniforms(CS123::GL::Shader *shader, SupportCanvas3D *context);
     void setLights();
     void renderGeometry();
@@ -78,6 +91,17 @@ private:
     std::unique_ptr<CS123::GL::Shader> m_wireframeShader;
     std::unique_ptr<CS123::GL::Shader> m_normalsShader;
     std::unique_ptr<CS123::GL::Shader> m_normalsArrowShader;
+    std::unique_ptr<CS123::GL::Shader> m_textureShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowPointShader;
+    std::shared_ptr<CS123::GL::Shader> m_skyboxShader;
+    std::shared_ptr<CS123::GL::Shader> m_shadowMapShader;
+    std::unique_ptr<CS123::GL::FullScreenQuad> m_fsq;
+    std::unique_ptr<CubeMap> m_skybox = nullptr;
+
+
+    std::vector<std::shared_ptr<ShadowMap>> m_shadowMaps;
+
 
     std::unordered_map<std::string, std::unique_ptr<TetMesh>> m_meshTemplateCache;
     std::vector<TetMesh> m_meshes;

@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "gl/datatype/VBO.h"
 #include "GL/glew.h"
 
 namespace CS123 { namespace GL {
@@ -36,7 +37,6 @@ private:
     GLuint m_numVertices;
     int m_size;
     GLenum m_triangleLayout;
-//    VBO::GEOMETRY_LAYOUT m_triangleLayout;
 };
 
 }}
