@@ -2,6 +2,7 @@
 #define FULLSCREENQUAD_H
 
 #include <memory>
+#include "gl/datatype/VAO.h"
 
 namespace CS123 { namespace GL {
 

@@ -1,14 +1,49 @@
+
 #include "SceneviewScene.h"
 #include "GL/glew.h"
 #include <QGLWidget>
+#include <QApplication>
 #include "Camera.h"
-
 #include "Settings.h"
 #include "SupportCanvas3D.h"
 #include "ResourceLoader.h"
 #include "gl/shaders/CS123Shader.h"
+#include "gl/shaders/Shader.h"
+#include "CubeMap.h"
 using namespace CS123::GL;
 #include "shapes/tetmesh.h"
+
+
+double fps = 0;
+int n = 1;
+
+std::vector<double> pastFrames;
+double approxRollingAverage(double new_sample) {
+
+    pastFrames.push_back(new_sample);
+
+    float avg = 0;
+    int start = std::max((int) (pastFrames.size() - 101), 0);
+    for(size_t i = start; i < pastFrames.size(); i++)
+    {
+        avg += pastFrames[i];
+    }
+    avg = avg / (pastFrames.size() - start);
+
+    if (pastFrames.size() == 1000) {
+        std::vector<double> nFrames;
+
+        size_t start = pastFrames.size() - 101;
+        for(size_t i = start; i < pastFrames.size(); i++)
+        {
+            nFrames.push_back(pastFrames[i]);
+        }
+        pastFrames = nFrames;
+    }
+
+    return avg;
+}
+
 
 SceneviewScene::SceneviewScene()
 {
@@ -19,7 +54,17 @@ SceneviewScene::SceneviewScene()
     loadWireframeShader();
     loadNormalsShader();
     loadNormalsArrowShader();
+    loadShadowShader();
+    loadShadowPointShader();
+    loadShadowMapShader();
+    loadSkyboxShader();
+
     //glShadeModel(GL_SMOOTH);
+
+    settings.useLighting = true;
+
+
+    m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
 }
 
 void SceneviewScene::parsingDone() {
@@ -32,16 +77,41 @@ void SceneviewScene::parsingDone() {
     for(unsigned long i = 0; i < m_nodes.size(); i++) {
         CS123ScenePrimitive prim = m_nodes[i].primitive;
         fflush(stdout);
-        if(prim.type != PrimitiveType::PRIMITIVE_MESH)
-            continue;
-        printf("Mesh found: %s\n", prim.meshfile.c_str());
-        fflush(stdout);
-        TetMesh mesh(m_nodes[i], m_meshTemplateCache);
-        m_meshes.push_back(mesh);
+        if(prim.type == PrimitiveType::PRIMITIVE_MESH) {
+            printf("Mesh found: %s\n", prim.meshfile.c_str());
+            fflush(stdout);
+            TetMesh mesh(m_nodes[i], m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
+        else if(prim.type == PrimitiveType::PRIMITIVE_SPHERE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/sphere.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
+        else if(prim.type == PrimitiveType::PRIMITIVE_CUBE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/cube.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
+        else if(prim.type == PrimitiveType::PRIMITIVE_CONE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/cone.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
         //mesh.buildShape();
         //m_mesh[prim.meshfile] = std::move(mesh.getOpenGLShape());
     }
     m_ready = 1;
+
+    for(auto l : m_lights)
+    {
+        std::cout << "added light! " <<(int) l.type << std::endl;
+        m_shadowMaps.push_back(std::make_shared<ShadowMap>(m_shadowShader, m_shadowPointShader, m_shadowMapShader, l, this));
+    }
+
     initializationMutex.unlock();
 }
 
@@ -75,23 +145,110 @@ void SceneviewScene::loadNormalsArrowShader() {
     m_normalsArrowShader = std::make_unique<Shader>(vertexSource, geometrySource, fragmentSource);
 }
 
+void SceneviewScene::loadShadowShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow.frag");
+    m_shadowShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
+void SceneviewScene::loadSkyboxShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/skybox.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/skybox.frag");
+    m_skyboxShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
+void SceneviewScene::loadShadowPointShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.vert");
+    std::string geometrySource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.gsh");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadowPoint.frag");
+    m_shadowPointShader = std::make_shared<CS123::GL::Shader>(vertexSource, geometrySource, fragmentSource);
+}
+
+
+void SceneviewScene::loadShadowMapShader() {
+    std::string vertexSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow_map.vert");
+    std::string fragmentSource = ResourceLoader::loadResourceFileToString(":/shaders/shadow_map.frag");
+    m_shadowMapShader = std::make_shared<CS123::GL::Shader>(vertexSource, fragmentSource);
+}
+
+
+int frames = 0;
+QTime m_timer;
+
 void SceneviewScene::render(SupportCanvas3D *context) {
+
+    m_timer.start();
+
     setClearColor();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    if (m_lights.size() == 0){
+        return;
+    }
+
+#if 1
+    // shadow mapping
+
+
+    for(auto& m : m_shadowMaps)
+    {
+        m->update(context->getCamera());
+    }
+
+
+    // Restore...
+    float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
+    glViewport(0, 0, context->width() * ratio, context->height() * ratio);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glCullFace(GL_BACK);
+
+
     m_phongShader->bind();
+
+    m_phongShader->setUniform("numLights", (int) m_lights.size());
+
+    for(size_t i = 0; i < m_lights.size(); i++)
+    {
+        m_shadowMaps[i]->prepareShader(m_phongShader.get(), "shadow", i);
+    }
+
     setSceneUniforms(context);
     setLights();
     renderGeometry();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    m_phongShader->unbind();
 
+
+    m_phongShader->unbind();
+#endif
+
+
+    glDepthFunc(GL_LEQUAL);
+    m_skyboxShader->bind();
+
+    //m_skybox->textureId()
+
+    m_skyboxShader->setUniform("v", glm::mat4(glm::mat3(context->getCamera()->getViewMatrix())));
+    m_skyboxShader->setUniform("p", context->getCamera()->getProjectionMatrix());
+    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_skybox->textureId());
+
+    m_skybox->draw();
+
+    m_skyboxShader->unbind();
+    glDepthFunc(GL_LESS);
+
+    fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+    frames++;
+
+    if (frames % 100 == 0) {
+        printf("FPS: %f\n", fps);
+        frames = 0;
+    }
 }
 
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {
     Camera *camera = context->getCamera();
-    m_phongShader->setUniform("useLighting", settings.useLighting);
-    m_phongShader->setUniform("useArrowOffsets", false);
+    //m_phongShader->setUniform("useLighting", settings.useLighting);
+    //m_phongShader->setUniform("useArrowOffsets", false);
     m_phongShader->setUniform("p" , camera->getProjectionMatrix());
     m_phongShader->setUniform("v", camera->getViewMatrix());
 }
@@ -156,6 +313,19 @@ void SceneviewScene::setLights()
     // know about OpenGL and leverage your Shapes classes to get the job done.
 
 }*/
+
+void SceneviewScene::renderGeometry(CS123::GL::Shader* shader) {
+    //while(!m_ready);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    for(unsigned long i = 0; i < m_meshes.size(); i++) {
+        TetMesh& tetmesh = m_meshes[i];
+        auto onode = tetmesh.getONode();
+        shader->setUniform("m", onode.trans);
+        //shader->applyMaterial(onode.primitive.material);
+        tetmesh.draw();
+    }
+}
 
 void SceneviewScene::renderGeometry() {
     //while(!m_ready);

@@ -64,6 +64,7 @@ public:
     void setTexture(const std::string &name, const Texture2D &t);
     void setTexture(const std::string &name, const Texture3D &t);
     void setTexture(const std::string &name, const TextureCube &t);
+    void setTexture(const std::string &name, GLuint type, GLuint id);
 
     void bind();
     void unbind();
@@ -91,6 +92,7 @@ private:
     bool isUniformArray(const GLchar *name , GLsizei nameLength);
     bool isTexture(GLenum type);
     void addUniform(const std::string &name);
+    void addTextureArray(const std::string &name, size_t size);
     void addUniformArray(const std::string &name, size_t size);
     void addTexture(const std::string &name);
     GLuint m_programID;

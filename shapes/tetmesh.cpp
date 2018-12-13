@@ -11,6 +11,7 @@
 #include <unordered_set>
 #include "Settings.h"
 #include <Eigen/Dense>
+#include <mutex>
 #include <Eigen/Eigenvalues>
 #include "timing.h"
 #include "tetmeshparser.h"
