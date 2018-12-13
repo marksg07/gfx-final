@@ -63,8 +63,12 @@ SceneviewScene::SceneviewScene()
 
     settings.useLighting = true;
 
+    m_fsq = std::make_unique<CS123::GL::FullScreenQuad>();
 
     m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
+    m_fbo = std::make_unique<FBO>(1, FBO::DEPTH_STENCIL_ATTACHMENT::DEPTH_ONLY, 1024, 1024,
+                                  TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
+
 }
 
 void SceneviewScene::parsingDone() {
@@ -196,9 +200,11 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     }
 
 
+
+
+    m_fbo->bind();
+
     // Restore...
-    float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
-    glViewport(0, 0, context->width() * ratio, context->height() * ratio);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glCullFace(GL_BACK);
@@ -221,7 +227,6 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_phongShader->unbind();
 #endif
 
-
     glDepthFunc(GL_LEQUAL);
     m_skyboxShader->bind();
 
@@ -235,6 +240,21 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     m_skyboxShader->unbind();
     glDepthFunc(GL_LESS);
+
+
+    m_fbo->unbind();
+
+
+    float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
+    glViewport(0, 0, context->width() * ratio, context->height() * ratio);
+
+    m_shadowMapShader->bind();
+    float w = context->width() * ratio;
+    float h = context->height() * ratio;
+    m_shadowMapShader->setUniform("inverseScreenSize", glm::vec2(1.0 / w, 1.0 / h));
+    m_fbo->getColorAttachment(0).bind();
+    m_fsq->draw();
+    m_shadowMapShader->unbind();
 
     fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
     frames++;

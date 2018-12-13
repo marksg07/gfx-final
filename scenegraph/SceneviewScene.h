@@ -11,6 +11,9 @@
 #include "CubeMap.h"
 #include "ShadowMap.h"
 #include "shapes/tetmesh.h"
+#include "gl/util/FullScreenQuad.h"
+#include "gl/datatype/FBO.h"
+
 namespace CS123 { namespace GL {
 
     class Shader;
@@ -98,6 +101,7 @@ private:
     std::shared_ptr<CS123::GL::Shader> m_shadowMapShader;
     std::unique_ptr<CS123::GL::FullScreenQuad> m_fsq;
     std::unique_ptr<CubeMap> m_skybox = nullptr;
+    std::unique_ptr<FBO> m_fbo;
 
 
     std::vector<std::shared_ptr<ShadowMap>> m_shadowMaps;
