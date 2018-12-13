@@ -32,14 +32,32 @@ void SceneviewScene::parsingDone() {
     for(unsigned long i = 0; i < m_nodes.size(); i++) {
         CS123ScenePrimitive prim = m_nodes[i].primitive;
         fflush(stdout);
-        if(prim.type != PrimitiveType::PRIMITIVE_MESH)
-            continue;
-        printf("Mesh found: %s\n", prim.meshfile.c_str());
-        fflush(stdout);
-        TetMesh mesh(m_nodes[i], m_meshTemplateCache);
-        m_meshes.push_back(mesh);
-        //mesh.buildShape();
-        //m_mesh[prim.meshfile] = std::move(mesh.getOpenGLShape());
+        if(prim.type == PrimitiveType::PRIMITIVE_MESH) {
+            printf("Mesh found: %s\n", prim.meshfile.c_str());
+            fflush(stdout);
+            TetMesh mesh(m_nodes[i], m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+            //mesh.buildShape();
+            //m_mesh[prim.meshfile] = std::move(mesh.getOpenGLShape());
+        }
+        /*else if(prim.type == PrimitiveType::PRIMITIVE_SPHERE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/sphere.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
+        else if(prim.type == PrimitiveType::PRIMITIVE_CUBE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/cube.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }
+        else if(prim.type == PrimitiveType::PRIMITIVE_CONE) {
+            object_node_t node = m_nodes[i];
+            node.primitive.meshfile = "example-meshes/cone.mesh";
+            TetMesh mesh(node, m_meshTemplateCache);
+            m_meshes.push_back(mesh);
+        }*/
     }
     m_ready = 1;
     initializationMutex.unlock();

@@ -7,7 +7,7 @@
 #include "openglshape.h"
 #include "ui/mainwindow.h"
 #include "gl/shaders/ShaderAttribLocations.h"
-
+#include <Eigen/Dense>
 // combination hash function that combines hashes of each element
 template <typename...> struct hashh;
 
@@ -82,6 +82,7 @@ public:
     const object_node_t& getONode() { return m_onode; }
 private:
     void calcFacesAndNorms();
+    void calcFaces();
     void calcNorms();
     void computeFracturing();
     void computeFracture(std::vector<glm::vec3>& forcePerNode, const tet_t& tet, glm::mat3x3 stress);
@@ -93,13 +94,14 @@ private:
     void calcBaryTransforms();
     void calcPointMasses();
     void markTouchingFaces(const std::unordered_set<glm::ivec2, ivec2_hash>& faceSet, tet_t& tet, int pidx);
-
+    void calcMatspaceCrosses();
 
     int addNewPoint();
     std::vector<glm::vec3> m_points;
     std::vector<bool> m_isCrackTip;
     std::vector<glm::vec3> m_vels;
     std::vector<glm::vec3> m_norms;
+    std::vector<Eigen::Matrix3f> m_matspace_crosses;
     std::vector<tet_t> m_tets;
     std::vector<std::unordered_set<glm::ivec2, ivec2_hash>> m_pToTMap;
     std::unordered_map<glm::ivec3, bool, ivec3_hash> m_faces;

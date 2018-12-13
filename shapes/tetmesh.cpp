@@ -8,12 +8,15 @@
 #include <sys/time.h>
 #include <functional>
 #include <glm/gtx/random.hpp>
+#include <glm/gtx/transform.hpp>
 #include <unordered_set>
 #include "Settings.h"
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
+#include <Eigen/Cholesky>
 #include "timing.h"
 #include "tetmeshparser.h"
+#include <glm/gtc/matrix_access.hpp>
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
@@ -75,6 +78,35 @@ std::vector<std::unordered_set<glm::ivec2, ivec2_hash>> tetsTouchingPoint(const 
 }
 }
 
+Eigen::Matrix3f glmToEigen(glm::mat3x3 mat) {
+    Eigen::Matrix3f out;
+    out << mat[0][0], mat[1][0], mat[2][0],
+            mat[0][1], mat[1][1], mat[2][1],
+            mat[0][2], mat[1][2], mat[2][2];
+    return out;
+}
+
+glm::mat3x3 eigenToGlm(Eigen::Matrix3f mat) {
+    return glm::mat3x3(mat(0), mat(3), mat(6),
+                    mat(1), mat(4), mat(7),
+                    mat(2), mat(5), mat(8));
+}
+
+void TetMesh::calcMatspaceCrosses() {
+    for(int i = 0; i < m_tets.size(); i++) {
+        tet_t tet = m_tets[i];
+        auto p1 = m_points[tet.p1];
+        auto p2 = m_points[tet.p2];
+        auto p3 = m_points[tet.p3];
+        auto p4 = m_points[tet.p4];
+
+        glm::vec3 p1an = -glm::cross(p4 - p2, p3 - p2);
+        glm::vec3 p2an = -glm::cross(p4 - p3, p1 - p3);
+        glm::vec3 p3an = -glm::cross(p4 - p1, p2 - p1);
+        m_matspace_crosses[i] = glmToEigen(glm::mat3x3(p1an, p2an, p3an));
+    }
+}
+
 // XXX material and nodefile unused
 TetMesh::TetMesh(std::string filename, std::string nodefile) {
     // material unused for now
@@ -84,11 +116,15 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     m_tets = getTets(out);
     m_baryTransforms.resize(m_tets.size());
     m_points = getPoints(out);
+    for(int i = 0; i < m_points.size(); i++) {
+        //m_points[i] = glm::vec3(glm::rotate((float)M_PI/6.f, glm::vec3(1, 0, 0)) * glm::rotate((float)M_PI/6.f, glm::vec3(0, 1, 0)) * glm::vec4(m_points[i], 0.f));
+    }
     m_isCrackTip.resize(m_points.size());
     m_norms.resize(m_points.size());
     m_vels.resize(m_points.size());
     m_pointMasses.resize(m_points.size());
     m_pToTMap = tetsTouchingPoint(m_tets, m_points.size());
+    m_matspace_crosses.resize(m_tets.size());
     float avg = 0;
     for(int i = 0; i < m_points.size(); i++) {
         avg += m_pToTMap[i].size();
@@ -100,13 +136,14 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     printf("Tets loaded: %lu\n", m_tets.size());
     printf("m_faces size is now %lu\n", m_faces.size());
     calcBaryTransforms();
+    calcMatspaceCrosses();
     calcPointMasses();
     std::fill(m_isCrackTip.begin(), m_isCrackTip.end(), false);
     srand(time(NULL));
 
     // balloon everything out a bit
     for(long unsigned int i = 0;i < m_points.size(); i++) {
-        //m_points[i] *= 1.2;
+        //m_vels[i] = -m_points[i] / 1.f;
     }
     calcNorms();
     printf("N surface faces: %lu\n", m_faces.size());
@@ -128,6 +165,7 @@ TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique
     m_pointMasses = copyFrom->m_pointMasses;
     m_vels = copyFrom->m_vels;
     m_isCrackTip = copyFrom->m_isCrackTip;
+    m_matspace_crosses = copyFrom->m_matspace_crosses;
 }
 
 namespace {
@@ -142,14 +180,6 @@ bool tetInverted(const std::vector<glm::vec3> &points, tet_t tet) {
     auto p4 = points[tet.p4];
     glm::vec3 cross123 = glm::cross(p2 - p1, p3 - p1);
     return glm::dot(cross123, p4 - p1) < 0;
-}
-
-Eigen::Matrix3f glmToEigen(glm::mat3x3 mat) {
-    Eigen::Matrix3f out;
-    out << mat[0][0], mat[1][0], mat[2][0],
-            mat[0][1], mat[1][1], mat[2][1],
-            mat[0][2], mat[1][2], mat[2][2];
-    return out;
 }
 
 glm::vec3 getCenter(const std::vector<glm::vec3> &points, tet_t tet) {
@@ -182,16 +212,70 @@ glm::mat3x3 getStress(glm::mat3x3 F, glm::mat3x3 V) {
     glm::mat3x3 strain = Ft * F - id;
     glm::mat3x3 trace_matrix = (strain[0][0] + strain[1][1] + strain[2][2]) * id;
 
-    glm::mat3x3 stress_elastic = 2 * settings.femRigidity * (strain - 1/3.f * trace_matrix)
+    glm::mat3x3 stress_elastic = 2 * settings.femRigidity * strain
             + settings.femIncompressibility * trace_matrix;
 
     glm::mat3x3 strain_rate = Ft * V + Vt * F;
     glm::mat3x3 sr_trace_matrix = (strain_rate[0][0] + strain_rate[1][1] + strain_rate[2][2]) * id;
 
-    glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * (strain_rate - 1/3.f * sr_trace_matrix)
-            + settings.femIncompressibility * sr_trace_matrix;
+    glm::mat3x3 stress_viscous = 2 * settings.femShearViscosity * strain_rate
+            + settings.femBulkViscosity * sr_trace_matrix;
 
-    return stress_elastic + stress_viscous;
+    return F*(stress_elastic + stress_viscous);
+}
+
+glm::mat3x3 getStressOpposingInversion(glm::mat3x3 F, glm::mat3x3 V, Eigen::Matrix3f Bm) {
+    auto mat = F;
+    /*printf("F: %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+           mat[0][0], mat[1][0], mat[2][0],
+                       mat[0][1], mat[1][1], mat[2][1],
+                       mat[0][2], mat[1][2], mat[2][2]);*/
+    Eigen::Matrix3f eigF = glmToEigen(F);
+    //std::cout << "eigF: " << eigF;
+    auto solver = Eigen::LDLT<Eigen::Matrix3f>(eigF.transpose() * eigF);
+    Eigen::Vector3f Fhatsquared = solver.vectorD();
+    //std::cout << "Fhatsquared: " << Fhatsquared;
+    Eigen::Matrix3f rotV = solver.matrixL();
+    float det = rotV.determinant();
+    if(det < 0) {
+        rotV.col(0) *= -1;
+    }
+    //printf("det of rotV is %f\n", det);
+    //assert(fabs(det) < 1.1 && fabs(det) > 0.9);
+    Eigen::Vector3f Fhat(sqrt(Fhatsquared(0)), sqrt(Fhatsquared(1)), sqrt(Fhatsquared(2)));
+    Eigen::DiagonalMatrix<float, 3> intermed(Fhat);
+    Eigen::Matrix3f Fhatmat(intermed);
+    Eigen::DiagonalMatrix<float, 3> invinter(Fhat.cwiseInverse());
+    Eigen::Matrix3f Fhatmatcwise(invinter);
+    Eigen::Matrix3f rotU = eigF * rotV * Fhatmatcwise;
+    float uDet = rotU.determinant();
+    if(uDet < 0) {
+        int mindx = 0;
+        if(Fhat(1) < Fhat(0))
+            mindx = 1;
+        if(mindx == 0) {
+            if(Fhat(2) < Fhat(0))
+                mindx = 2;
+        }
+        else {
+            if(Fhat(2) < Fhat(1))
+                mindx = 2;
+        }
+        rotU.col(mindx) *= -1;
+        Fhatmat(mindx*4) *= -1;
+    }
+    //printf("udet: %f, vdet: %f\n", fabs(uDet), fabs(det));
+    Eigen::Matrix3f id = Eigen::Matrix3f::Identity();
+    Eigen::Matrix3f strainhat = Fhatmat - id;
+    Eigen::Matrix3f Phat = 2 * settings.femRigidity * strainhat
+            + settings.femIncompressibility * strainhat.trace() * id;
+    //std::cout << "F: " << eigF << "\nRotU: " << rotU << "\nPhat: " << Phat << "\nrotV transpose: " << rotV.transpose();
+    Eigen::Matrix3f eigV = glmToEigen(V);
+    Eigen::Matrix3f Vhat = rotU.transpose() * eigV * rotV;
+    Eigen::Matrix3f PVhat = settings.femShearViscosity * (Vhat + Vhat.transpose())
+            + settings.femBulkViscosity * Vhat.trace() * id;
+    return -eigenToGlm(rotU * Phat * rotV.transpose() * Bm
+                      + rotU * PVhat * rotV.transpose() * Bm);
 }
 
 void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
@@ -228,14 +312,24 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
         glm::mat3x3 D(v1 - v4, v2 - v4, v3 - v4);
         glm::mat3x3 V = glm::transpose(D * m_baryTransforms[i]);
 
+        auto mat = F;
+        /*printf("F: %f, %f, %f, %f, %f, %f, %f, %f, %f\n",
+               mat[0][0], mat[1][0], mat[2][0],
+                           mat[0][1], mat[1][1], mat[2][1],
+                           mat[0][2], mat[1][2], mat[2][2]);*/
+        /*glm::mat3x3 stress = getStressOpposingInversion(F, V, m_matspace_crosses[i]);
+
+        glm::vec3 p1force = glm::column(stress, 0);
+        glm::vec3 p2force = glm::column(stress, 1);
+        glm::vec3 p3force = glm::column(stress, 2);
+        glm::vec3 p4force = -(p1force + p2force + p3force);*/
+
         glm::mat3x3 stress = getStress(F, V);
-        glm::mat3x3 stress_t_ws = F * stress;
 
-        glm::vec3 p1force = stress_t_ws * -glm::cross(p4 - p2, p3 - p2);
-        glm::vec3 p2force = stress_t_ws * -glm::cross(p4 - p3, p1 - p3);
-        glm::vec3 p3force = stress_t_ws * -glm::cross(p4 - p1, p2 - p1);
-        glm::vec3 p4force = stress_t_ws * -glm::cross(p2 - p1, p3 - p1);
-
+        glm::vec3 p1force = stress * -glm::cross(p4 - p2, p3 - p2);
+        glm::vec3 p2force = stress * -glm::cross(p4 - p3, p1 - p3);
+        glm::vec3 p3force = stress * -glm::cross(p4 - p1, p2 - p1);
+        glm::vec3 p4force = stress * -glm::cross(p2 - p1, p3 - p1);
         //forcesMutex.lock();
         forcePerNode[tet.p1] += p1force;
         forcePerNode[tet.p2] += p2force;
@@ -273,16 +367,19 @@ void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
 }
 
 void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
+    static int ncalls = 0;
+    ncalls++;
     std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
     // first add grav
-    for(long unsigned int i = 0;i < points.size(); i++) {
+    for(long unsigned int i = 0; i < points.size(); i++) {
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
+        //forcePerNode[i] += glm::vec3(m_points[i].x >= 0 ? 5 : -5, 0, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, points, vels);
     computeCollisionForces(forcePerNode, points, vels, -2);
 }
 
-#define MIN_STRESS_FRACTURE 2000
+#define MIN_STRESS_FRACTURE 5000
 
 /*struct tetface {
     int tetidx;
@@ -349,6 +446,13 @@ void addTouchingFaces(std::unordered_set<glm::ivec2, ivec2_hash>& faceSet, tet_t
 
 void TetMesh::computeFracturing() {
     // first, mark points for fracturing.
+    static int hasCracked = 0;
+    if(hasCracked)
+        return;
+
+    float maxEig = -1;
+    int bestTip = -1;
+    glm::vec3 bestSplit;
     std::unordered_map<int, glm::vec3> toFracture;
     for(int i = 0; i < m_tets.size(); i++) {
         tet_t tet = m_tets[i];
@@ -384,7 +488,9 @@ void TetMesh::computeFracturing() {
             }
         }
 
-        if(maxval > MIN_STRESS_FRACTURE) {
+        if(maxval > MIN_STRESS_FRACTURE && maxval > maxEig) {
+            maxEig = maxval;
+
             int tip;
             std::vector<int> crackTips;
             crackTips.reserve(4);
@@ -406,11 +512,17 @@ void TetMesh::computeFracturing() {
             Eigen::Vector3cf eigvector = solver.eigenvectors().col(maxidx);
             glm::vec3 splitNormal(std::abs(eigvector(0)), std::abs(eigvector(1)), std::abs(eigvector(2)));
             splitNormal = glm::normalize(splitNormal);
-            toFracture[tip] = splitNormal;
-            m_isCrackTip[tip] = false;
+            //toFracture[tip] = splitNormal;
+            //m_isCrackTip[tip] = false;
+            bestTip = tip;
+            bestSplit = splitNormal;
             printf("Cracking at point %d!\n", tip);
         }
     }
+    if(maxEig == -1)
+        return;
+    toFracture[bestTip] = bestSplit;
+    m_isCrackTip[bestTip] = false;
     // go through all the points to be fractured and do it
     for(auto it = toFracture.begin(); it != toFracture.end(); it++) {
         int tip = it->first;
@@ -449,10 +561,11 @@ void TetMesh::computeFracturing() {
         int pminus = addNewPoint();
         m_points[pminus] = m_points[tip];
         m_vels[pminus] = m_vels[tip];
-        //m_vels[tip] += splitNormal / 2.f / 5000.f;
-        //m_vels[pminus] -= splitNormal / 2.f / 5000.f;
+        m_vels[tip] += maxEig * splitNormal / 2.f / 50000.f;
+        m_vels[pminus] -= maxEig * splitNormal / 2.f / 50000.f;
         m_pointMasses[pminus] = m_pointMasses[tip] / 2;
         m_pointMasses[tip] = m_pointMasses[pminus];
+        //m_isCrackTip[pminus] = true;
         // now we have to find all pairs of tets on plus and minus side that share a face that includes
         // the tip. This is really annoying; better way???
         std::unordered_set<glm::ivec2, ivec2_hash> plusFaces;
@@ -478,11 +591,14 @@ void TetMesh::computeFracturing() {
             m_pToTMap[pminus].insert(tup);
         }
     }
+    if(toFracture.size()) {
+        this->calcFaces();
+    }
 }
 
 void TetMesh::update(float timestep) {
     // step 1: compute all fractures.
-    computeFracturing();
+    //computeFracturing();
 
     std::vector<glm::vec3> forces(m_points.size()),
             dxk1(m_points.size()),
@@ -652,9 +768,14 @@ bool setIfContains(std::unordered_map<glm::ivec3, bool, ivec3_hash>& map, glm::i
 
 
 void TetMesh::calcFacesAndNorms() {
+    calcFaces();
+    calcNorms();
+}
+
+void TetMesh::calcFaces() {
     m_faces.clear();
     // we will extract the surface mesh by looking at every face and finding which are occluded
-    for(long unsigned int i = 0;i < m_tets.size(); i++) {
+    for(long unsigned int i = 0; i < m_tets.size(); i++) {
         tet_t tet = m_tets[i];
         glm::ivec3 f1(tet.p1, tet.p2, tet.p4),
                 f2(tet.p2, tet.p3, tet.p4),
@@ -672,8 +793,6 @@ void TetMesh::calcFacesAndNorms() {
             it = m_faces.erase(it); // kill non-outward faces
         }
     }
-    calcNorms();
-
 }
 
 void TetMesh::calcNorms() {
