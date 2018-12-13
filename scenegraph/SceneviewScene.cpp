@@ -321,7 +321,7 @@ void SceneviewScene::renderGeometry(CS123::GL::Shader* shader) {
     for(unsigned long i = 0; i < m_meshes.size(); i++) {
         TetMesh& tetmesh = m_meshes[i];
         auto onode = tetmesh.getONode();
-        shader->setUniform("m", onode.trans);
+        shader->setUniform("m", glm::mat4(1.0f));
         //shader->applyMaterial(onode.primitive.material);
         tetmesh.draw();
     }
@@ -333,7 +333,7 @@ void SceneviewScene::renderGeometry() {
     for(unsigned long i = 0; i < m_meshes.size(); i++) {
         TetMesh& tetmesh = m_meshes[i];
         auto onode = tetmesh.getONode();
-        m_phongShader->setUniform("m", onode.trans);
+        m_phongShader->setUniform("m", glm::mat4(1.0f));
         m_phongShader->applyMaterial(onode.primitive.material);
         if(m_running) {
             float timePerStep = settings.femTimeStep / settings.femStepsPerFrame;

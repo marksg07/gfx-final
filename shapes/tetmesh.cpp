@@ -70,7 +70,7 @@ std::vector<std::vector<int>> tetsTouchingPoint(const std::vector<tet_t>& tets, 
 }
 
 // XXX material and nodefile unused
-TetMesh::TetMesh(std::string filename, std::string nodefile) {
+TetMesh::TetMesh(std::string filename, glm::mat4x4 trans, std::string nodefile) {
     // material unused for now
     // m_material = {0.16, 0.003, 0.16, 0.003};
     tetgenio out;
@@ -78,6 +78,9 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
     m_tets = getTets(out);
     m_baryTransforms.resize(m_tets.size());
     m_points = getPoints(out);
+    for(int i = 0; i < m_points.size(); i++) {
+        m_points[i] = glm::vec3(trans * glm::vec4(m_points[i], 1.f));
+    }
     m_isCrackTip.resize(m_points.size());
     m_norms.resize(m_points.size());
     m_vels.resize(m_points.size());
@@ -102,8 +105,8 @@ TetMesh::TetMesh(std::string filename, std::string nodefile) {
 
 TetMesh::TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map) {
     m_onode = node;
-    if(!map.count(node.primitive.meshfile)) {
-        map[node.primitive.meshfile] = std::make_unique<TetMesh>(node.primitive.meshfile);
+    if(true) {
+        map[node.primitive.meshfile] = std::make_unique<TetMesh>(node.primitive.meshfile, node.trans);
     }
     TetMesh* copyFrom = map[node.primitive.meshfile].get();
     // copy everything from the template except the node
@@ -330,7 +333,7 @@ void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, m_points, m_vels);
-    computeCollisionForces(forcePerNode, m_points, m_vels, -2);
+    computeCollisionForces(forcePerNode, m_points, m_vels, -10);
 }
 
 void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
@@ -340,7 +343,7 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, points, vels);
-    computeCollisionForces(forcePerNode, points, vels, -2);
+    computeCollisionForces(forcePerNode, points, vels, -10);
 }
 
 void TetMesh::update(float timestep) {

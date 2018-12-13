@@ -66,7 +66,7 @@ class TetMesh
 public:
     TetMesh(){}
     TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map);
-    TetMesh(std::string filename, std::string nodefile=std::string());
+    TetMesh(std::string filename, glm::mat4x4 trans=glm::mat4x4(), std::string nodefile=std::string());
     std::vector<TetMesh> fracture(int tetIdx, glm::vec3 fracNorm);
     void update(float timestep);
     void draw();
