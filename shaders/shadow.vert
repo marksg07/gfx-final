@@ -1,8 +1,7 @@
 #version 330 core
 
-layout(location = 0) in vec3 position; // Position of the vertex
+layout(location = 0) in vec3 position;
 
-// Transformation matrices
 uniform mat4 m;
 uniform mat4 shadowMat;
 

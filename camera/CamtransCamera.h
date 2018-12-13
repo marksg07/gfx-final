@@ -53,9 +53,6 @@ public:
     // Returns the currently set height angle.
     float getHeightAngle() const;
 
-    // Returns the up vector.
-    glm::vec4 getUp() const;
-
     // Move this camera to a new eye position, and orient the camera's axes given look and up
     // vectors.
     void orientLook(const glm::vec4 &eye, const glm::vec4 &look, const glm::vec4 &up);
@@ -87,13 +84,19 @@ public:
 
 private:
 
-    // @TODO: [CAMTRANS] Add member variables here as needed (ex. vec4 m_u)
-    glm::vec4 m_u, m_v, m_w, m_eye;
-    float m_aspectRatio, m_near, m_far;
+    // @TODO TASK 1: [CAMTRANS] Add member variables here as needed (ex. vec4 m_u)
+    
+    float m_aspectRatio;
+    float m_near, m_far;
+
+    glm::mat4 m_translationMatrix, m_perspectiveTransformation;
+    glm::mat4 m_scaleMatrix, m_rotationMatrix;
+
     float m_thetaH, m_thetaW;
-    glm::vec4 m_up;
-    glm::mat4 m_translationMatrix, m_perspectiveTransformation,
-        m_scaleMatrix, m_rotationMatrix;
+
+    glm::vec4 m_eye, m_up;
+
+    glm::vec4 m_u, m_v, m_w;
 };
 
 #endif // CAMTRANSCAMERA_H

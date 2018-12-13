@@ -5,7 +5,7 @@ QT += opengl xml
 TARGET = CS123
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++14
+QMAKE_CXXFLAGS += -Ofast -std=c++14
 CONFIG += c++14
 
 unix:!macx {

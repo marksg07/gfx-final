@@ -67,12 +67,6 @@ void OrbitingCamera::mouseScrolled(int delta) {
     updateViewMatrix();
 }
 
-void OrbitingCamera::mouse1Clicked(int delta) {
-    m_zoomZ *= powf(0.9f, delta);
-
-    updateViewMatrix();
-}
-
 void OrbitingCamera::updateMatrices() {
     updateProjectionMatrix();
     updateViewMatrix();

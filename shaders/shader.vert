@@ -3,19 +3,12 @@
 layout(location = 0) in vec3 position; // Position of the vertex
 layout(location = 1) in vec3 normal;   // Normal of the vertex
 layout(location = 5) in vec2 texCoord; // UV texture coordinates
-layout(location = 10) in float arrowOffset; // Sideways offset for billboarded normal arrows
 
-//out vec3 color; // Computed color for this vertex
 out vec2 texc;
 
-// Transformation matrices
 uniform mat4 p;
 uniform mat4 v;
 uniform mat4 m;
-//out vec4 shadowCoord;
-
-
-// Material data
 
 
 out vec4 position_cameraSpace;
@@ -23,7 +16,6 @@ out vec4 normal_cameraSpace;
 out vec4 obj_position;
 
 void main() {
-    //texc = texCoord * repeatUV;
     texc = texCoord;
 
     obj_position = vec4(position, 1.0);
@@ -35,8 +27,4 @@ void main() {
 
 
     gl_Position = p * position_cameraSpace;
-    //gl_Position = obj_position;
-
-
-    //color = clamp(color, 0.0, 1.0);
 }

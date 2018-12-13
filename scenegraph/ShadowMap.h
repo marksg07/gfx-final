@@ -5,6 +5,7 @@
 #include "SceneviewScene.h"
 #include "gl/textures/DepthTexture.h"
 #include "gl/datatype/DepthFBO.h"
+#include "Settings.h"
 #include "glm/gtx/string_cast.hpp"
 #include "Camera.h"
 #include "gl/util/FullScreenQuad.h"
@@ -42,11 +43,11 @@ public:
 
     void prepareShader(CS123::GL::Shader* shader, std::string base, size_t i)
     {
-        if (m_light.type == LightType::LIGHT_DIRECTIONAL) {
+        if (m_light.type == LightType::LIGHT_DIRECTIONAL && settings.useDirectionalLights) {
             shader->setUniformArrayByIndex(base + "Mat", biasMVP(), i);
-            shader->setTexture(base + "Map[" + std::to_string(i) + "]",  GL_TEXTURE_2D, textureID());
-        } else if (m_light.type == LightType::LIGHT_POINT) {
-            shader->setTexture(base + "CubeMap[" + std::to_string(i) + "]",  GL_TEXTURE_CUBE_MAP, textureID());
+            shader->setTexture(base + "Map[" + std::to_string(i) + "]", GL_TEXTURE_2D, textureID());
+        } else if (m_light.type == LightType::LIGHT_POINT && settings.usePointLights) {
+            shader->setTexture(base + "CubeMap[" + std::to_string(i) + "]", GL_TEXTURE_CUBE_MAP, textureID());
         }
     }
 

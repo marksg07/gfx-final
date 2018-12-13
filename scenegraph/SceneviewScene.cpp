@@ -13,6 +13,38 @@
 using namespace CS123::GL;
 #include "shapes/tetmesh.h"
 
+
+double fps = 0;
+int n = 1;
+
+std::vector<double> pastFrames;
+double approxRollingAverage(double new_sample) {
+
+    pastFrames.push_back(new_sample);
+
+    float avg = 0;
+    int start = std::max((int) (pastFrames.size() - 101), 0);
+    for(size_t i = start; i < pastFrames.size(); i++)
+    {
+        avg += pastFrames[i];
+    }
+    avg = avg / (pastFrames.size() - start);
+
+    if (pastFrames.size() == 1000) {
+        std::vector<double> nFrames;
+
+        size_t start = pastFrames.size() - 101;
+        for(size_t i = start; i < pastFrames.size(); i++)
+        {
+            nFrames.push_back(pastFrames[i]);
+        }
+        pastFrames = nFrames;
+    }
+
+    return avg;
+}
+
+
 SceneviewScene::SceneviewScene()
 {
     initializationMutex.lock();
@@ -140,7 +172,13 @@ void SceneviewScene::loadShadowMapShader() {
 }
 
 
+int frames = 0;
+QTime m_timer;
+
 void SceneviewScene::render(SupportCanvas3D *context) {
+
+    m_timer.start();
+
     setClearColor();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -191,21 +229,20 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     m_skyboxShader->setUniform("v", glm::mat4(glm::mat3(context->getCamera()->getViewMatrix())));
     m_skyboxShader->setUniform("p", context->getCamera()->getProjectionMatrix());
-    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_shadowMaps[0]->textureID());
+    m_skyboxShader->setTexture("skybox", GL_TEXTURE_CUBE_MAP, m_skybox->textureId());
 
     m_skybox->draw();
 
     m_skyboxShader->unbind();
     glDepthFunc(GL_LESS);
 
-    /*
-    m_phongShader->bind();
-    setSceneUniforms(context);
-    setLights();
-    renderGeometry();
-    glBindTexture(GL_TEXTURE_2D, 0);
-    m_phongShader->unbind();*/
+    fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+    frames++;
 
+    if (frames % 100 == 0) {
+        printf("FPS: %f\n", fps);
+        frames = 0;
+    }
 }
 
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {

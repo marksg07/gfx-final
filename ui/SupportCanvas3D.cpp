@@ -53,7 +53,7 @@ CamtransCamera *SupportCanvas3D::getCamtransCamera() {
 }
 
 void SupportCanvas3D::startUpdateLoop() {
-    m_updateTimer.start(1000/60);
+    m_updateTimer.start(1000.0/240);
 }
 
 void SupportCanvas3D::stopUpdateLoop() {
@@ -280,7 +280,7 @@ void SupportCanvas3D::mousePressEvent(QMouseEvent *event) {
         update();
     }
     else if(event->button() == Qt::LeftButton) {
-        getCamera()->mouse1Clicked(-1);
+        //getCamera()->mouse1Clicked(-1);
         update();
     }
 }
