@@ -53,7 +53,7 @@ CamtransCamera *SupportCanvas3D::getCamtransCamera() {
 }
 
 void SupportCanvas3D::startUpdateLoop() {
-    m_updateTimer.start(1000.0/240);
+    m_updateTimer.start(0);
 }
 
 void SupportCanvas3D::stopUpdateLoop() {
@@ -75,7 +75,7 @@ void SupportCanvas3D::initializeGL() {
     initializeScenes();
     setSceneFromSettings();
 
-    settingsChanged();   
+    settingsChanged();
 
 }
 

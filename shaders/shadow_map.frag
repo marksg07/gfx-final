@@ -4,7 +4,7 @@ in vec2 texc;
 uniform sampler2D image;
 
 uniform vec2 inverseScreenSize;
-out vec3 fragColor;
+out vec4 fragColor;
 
 float[] QUALITY = float[](1, 1, 1, 1, 1, 1, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0);
 
@@ -14,24 +14,29 @@ float rgb2luma(vec3 rgb) {
 
 void main()
 {
-    vec3 colorCenter = texture(image, texc).xyz;
+    vec3 colorCenter = texture(image,texc).rgb;
+
+    // Luma at the current fragment
     float lumaCenter = rgb2luma(colorCenter);
 
-    float lumaUp = rgb2luma(texture(image, texc + vec2(0, -1)).xyz);
-    float lumaDown = rgb2luma(texture(image, texc + vec2(0, 1)).xyz);
-    float lumaLeft = rgb2luma(texture(image, texc + vec2(0, -1)).xyz);
-    float lumaRight = rgb2luma(texture(image, texc + vec2(0, 1)).xyz);
+    // Luma at the four direct neighbours of the current fragment.
+    float lumaDown = rgb2luma(textureOffset(image,texc,ivec2(0,-1)).rgb);
+    float lumaUp = rgb2luma(textureOffset(image,texc,ivec2(0,1)).rgb);
+    float lumaLeft = rgb2luma(textureOffset(image,texc,ivec2(-1,0)).rgb);
+    float lumaRight = rgb2luma(textureOffset(image,texc,ivec2(1,0)).rgb);
 
-    float lumaMin = min(lumaCenter, min(lumaUp, min(lumaDown, min(lumaLeft, lumaRight))));
-    float lumaMax = max(lumaCenter, max(lumaUp, max(lumaDown, max(lumaLeft, lumaRight))));
+    // Find the maximum and minimum luma around the current fragment.
+    float lumaMin = min(lumaCenter,min(min(lumaDown,lumaUp),min(lumaLeft,lumaRight)));
+    float lumaMax = max(lumaCenter,max(max(lumaDown,lumaUp),max(lumaLeft,lumaRight)));
 
+    // Compute the delta.
     float lumaRange = lumaMax - lumaMin;
 
-    if (lumaRange < max(0.0312, lumaMax*0.125)) {
-        fragColor = colorCenter;
+    // If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA.
+    if(true || lumaRange < max(0.0312,lumaMax*0.125)){
+        fragColor = vec4(colorCenter, 1);
         return;
     }
-
     // Query the 4 remaining corners lumas.
     float lumaDownLeft = rgb2luma(textureOffset(image,texc,ivec2(-1,-1)).rgb);
     float lumaUpRight = rgb2luma(textureOffset(image,texc,ivec2(1,1)).rgb);
@@ -192,5 +197,6 @@ void main()
     }
 
     // Read the color at the new UV coordinates, and use it.
-    fragColor = texture(image,finalUv).rgb;
+    //vec4(finalOffset * 1000, 0, 0, 1);//
+    fragColor = texture(image,finalUv);
 }
