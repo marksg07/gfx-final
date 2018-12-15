@@ -94,7 +94,7 @@ void SceneviewScene::parsingDone() {
         else if(prim.type == PrimitiveType::PRIMITIVE_CUBE) {
             object_node_t node = m_nodes[i];
             // if it's a cube and is first element, turn off physics
-            node.disablePhysics = true;
+            if (i == 0) node.disablePhysics = true;
             node.primitive.meshfile = "example-meshes/cube.mesh";
             TetMesh mesh(node, m_meshTemplateCache);
             m_meshes.push_back(mesh);
@@ -356,6 +356,7 @@ void SceneviewScene::renderGeometry() {
     for(unsigned long i = 0; i < m_meshes.size(); i++) {
         TetMesh& tetmesh = m_meshes[i];
         auto onode = tetmesh.getONode();
+        m_phongShader->setUniform("doEnvMap", !onode.disablePhysics && settings.metalBalls);
         m_phongShader->setUniform("m", glm::mat4(1.0f));
         m_phongShader->applyMaterial(onode.primitive.material);
         if(m_running) {

@@ -1078,148 +1078,6 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="femStop">
-       <property name="text">
-        <string>Stop simulation</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLineEdit" name="femTimeStep">
-       <property name="text">
-        <string>0.015</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Time step (ms)</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="0">
-      <widget class="QLineEdit" name="femIncompressibility">
-       <property name="text">
-        <string>1000</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="1">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Incompressibility</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLineEdit" name="femRigidity">
-       <property name="text">
-        <string>1000</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="0">
-      <widget class="QLineEdit" name="femBulkViscosity">
-       <property name="text">
-        <string>100</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="0">
-      <widget class="QLineEdit" name="femShearViscosity">
-       <property name="text">
-        <string>100</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="1">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Rigidity</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Bulk Viscosity</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="1">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Shear Viscosity</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>Pull</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string>Push</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="0">
-      <widget class="QLineEdit" name="femStepsPerFrame">
-       <property name="text">
-        <string>30</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>Steps/Frame</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="femStepOnce">
-       <property name="text">
-        <string>Step once</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QPushButton" name="femRestart">
-       <property name="text">
-        <string>Restart simulation</string>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="0">
-      <widget class="QCheckBox" name="showFXAAEdges">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>Show FXAA Edges</string>
-       </property>
-       <property name="tristate">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="0">
-      <widget class="QCheckBox" name="checkBox">
-       <property name="text">
-        <string>Shadow Mapping</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="1">
       <widget class="QLabel" name="fps_counter">
        <property name="palette">
@@ -1270,6 +1128,130 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QPushButton" name="femStop">
+       <property name="text">
+        <string>Stop simulation</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLineEdit" name="femTimeStep">
+       <property name="text">
+        <string>0.015</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Time step (ms)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLineEdit" name="femStepsPerFrame">
+       <property name="text">
+        <string>30</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Steps/Frame</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLineEdit" name="femIncompressibility">
+       <property name="text">
+        <string>10000</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Incompressibility</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLineEdit" name="femRigidity">
+       <property name="text">
+        <string>10000</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Rigidity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLineEdit" name="femBulkViscosity">
+       <property name="text">
+        <string>100</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Bulk Viscosity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLineEdit" name="femShearViscosity">
+       <property name="text">
+        <string>100</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Shear Viscosity</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="0">
+      <widget class="QCheckBox" name="showFXAAEdges">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Show FXAA Edges</string>
+       </property>
+       <property name="tristate">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="10" column="0">
+      <widget class="QCheckBox" name="checkBox">
+       <property name="text">
+        <string>Shadow Mapping</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QCheckBox" name="checkBox_2">
+       <property name="text">
+        <string>Metal Balls</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -1846,8 +1828,8 @@
      <y>707</y>
     </hint>
     <hint type="destinationlabel">
-     <x>563</x>
-     <y>117</y>
+     <x>415</x>
+     <y>81</y>
     </hint>
    </hints>
   </connection>
@@ -1987,7 +1969,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>90</x>
-     <y>2417</y>
+     <y>2386</y>
     </hint>
     <hint type="destinationlabel">
      <x>851</x>
@@ -2003,7 +1985,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>124</x>
-     <y>2722</y>
+     <y>2598</y>
     </hint>
     <hint type="destinationlabel">
      <x>750</x>
@@ -2019,11 +2001,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>106</x>
-     <y>2747</y>
+     <y>2623</y>
     </hint>
     <hint type="destinationlabel">
      <x>708</x>
      <y>2762</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_2</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_metalBalls_stateChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>78</x>
+     <y>2651</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>673</x>
+     <y>2640</y>
     </hint>
    </hints>
   </connection>
@@ -2057,5 +2055,6 @@
   <slot>on_showFXAAEdges_stateChanged()</slot>
   <slot>on_showFXAAEdges_stateChanged(int)</slot>
   <slot>on_shadowMapping_stateChanged(int)</slot>
+  <slot>on_metalBalls_stateChanged(int)</slot>
  </slots>
 </ui>
