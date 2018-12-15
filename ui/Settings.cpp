@@ -78,13 +78,20 @@ void Settings::loadSettingsOrDefaults() {
     bumpDepth = s.value("bumpDepth", 5).toInt();
     
     // FEM
+
+    femTimeStep = 0.015;
+    femStepsPerFrame = 30;
+    femIncompressibility = 1000;
+    femRigidity = 1000;
+    femBulkViscosity = 100;
+    femShearViscosity = 100;
     
-    femTimeStep = s.value("femTimeStep", 0.1).toFloat();
+    /*femTimeStep = s.value("femTimeStep", 0.1).toFloat();
     femStepsPerFrame = s.value("femStepsPerFrame", 1).toInt();
     femIncompressibility = s.value("femIncompressibility", 1.0).toFloat();
     femRigidity = s.value("femRigidity", 1.0).toFloat();
     femBulkViscosity = s.value("femBulkViscosity", 1.0).toFloat();
-    femShearViscosity = s.value("femShearViscosity", 1.0).toFloat();
+    femShearViscosity = s.value("femShearViscosity", 1.0).toFloat();*/
 
     currentTab = s.value("currentTab", TAB_2D).toBool();
 

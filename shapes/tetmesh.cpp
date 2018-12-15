@@ -15,12 +15,16 @@
 #include <Eigen/Eigenvalues>
 #include "timing.h"
 #include "tetmeshparser.h"
+
+const int FLOOR_Y = -3;
+
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
  * Viscosity: 10
  * Density: 1200
  */
+
 
 std::size_t hash_ivec3_fn(const glm::ivec3& v) {
     hashh<int, int, int> hasher;
@@ -333,7 +337,7 @@ void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, m_points, m_vels);
-    computeCollisionForces(forcePerNode, m_points, m_vels, -10);
+    computeCollisionForces(forcePerNode, m_points, m_vels, FLOOR_Y);
 }
 
 void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
@@ -343,7 +347,7 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
         forcePerNode[i] += glm::vec3(0, -0.1, 0) * m_pointMasses[i];
     }
     computeStressForces(forcePerNode, points, vels);
-    computeCollisionForces(forcePerNode, points, vels, -10);
+    computeCollisionForces(forcePerNode, points, vels, FLOOR_Y);
 }
 
 void TetMesh::update(float timestep) {
