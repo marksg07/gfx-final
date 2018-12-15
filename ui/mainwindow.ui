@@ -1175,6 +1175,9 @@
      </item>
      <item row="13" column="0">
       <widget class="QCheckBox" name="showFXAAEdges">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>Show FXAA Edges</string>
        </property>
@@ -1910,15 +1913,15 @@
    <sender>showFXAAEdges</sender>
    <signal>stateChanged(int)</signal>
    <receiver>MainWindow</receiver>
-   <slot>on_showFXAAEdges_stateChanged()</slot>
+   <slot>on_showFXAAEdges_stateChanged(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>110</x>
-     <y>2721</y>
+     <x>124</x>
+     <y>2722</y>
     </hint>
     <hint type="destinationlabel">
-     <x>683</x>
-     <y>2721</y>
+     <x>750</x>
+     <y>2739</y>
     </hint>
    </hints>
   </connection>
@@ -1950,5 +1953,6 @@
   <slot>on_femSimulate_clicked()</slot>
   <slot>on_femStop_clicked()</slot>
   <slot>on_showFXAAEdges_stateChanged()</slot>
+  <slot>on_showFXAAEdges_stateChanged(int)</slot>
  </slots>
 </ui>

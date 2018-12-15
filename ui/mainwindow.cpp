@@ -234,8 +234,21 @@ void MainWindow::fileOpen() {
     // This opens the 3D tab to initialize OGL so parsing
     // the scene doesn't crash. If you can find a better solution
     // feel free to change this.
+    printf("FDSGDFGHDFSGADFSGSFDBDGBG\n");
+    printf("FILE OPEN CALLED!");
+    printf("a\n");
+    fflush(stdout);
     activateCanvas3D();
-    QString file = QFileDialog::getOpenFileName(this, QString(), "/course/cs123/data/");
+    printf("b\n");
+    fflush(stdout);
+    QString file = QFileDialog::getOpenFileName(this,
+                                                QString(),
+                                                "/course/cs123/data/",
+                                                QString(),
+                                                nullptr,
+                                                QFileDialog::Option::DontUseNativeDialog);
+    printf("c\n");
+    fflush(stdout);
     if (!file.isNull()) {
         if (file.endsWith(".xml")) {
             CS123XmlSceneParser parser(file.toLatin1().data());
@@ -446,7 +459,7 @@ void MainWindow::on_femRestart_clicked() {
     m_canvas3D->on_femRestart_clicked();
 }
 
-void MainWindow::on_showFXAAEdges_stateChanged(int arg1)
+void MainWindow::on_showFXAAEdges_stateChanged(int val)
 {
-    m_canvas3D->on_showFXAAEdges_changed(arg1);
+    m_canvas3D->on_showFXAAEdges_changed(val);
 }
