@@ -14,8 +14,7 @@ CamtransCamera::CamtransCamera()
 {
     // @TODO Task 3: [CAMTRANS] Set up the default camera settings to match the demo...
 
-    orientLook(glm::vec4(2, 2, 2, 0), glm::vec4(-2, -2, -2, 0), glm::vec4(0, 1, 0, 0));
-
+    orientLook(glm::vec4(0, 0, 27.5, 0), glm::vec4(-2, -2, -2, 0), glm::vec4(0, 1, 0, 0));
 
     setAspectRatio(1.0);
     setHeightAngle(60);

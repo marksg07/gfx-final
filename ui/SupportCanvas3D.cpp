@@ -155,6 +155,11 @@ void SupportCanvas3D::loadSceneviewSceneFromParser(CS123XmlSceneParser &parser) 
 void SupportCanvas3D::setSceneToSceneview() {
     assert(m_sceneviewScene.get());
     m_currentScene = m_sceneviewScene.get();
+    CamtransCamera *cam = this->getCamtransCamera();
+    this->getCamtransCamera()->orientLook(
+                                glm::vec4(0, 0, 30, 0),
+                                cam->getLook(),
+                                glm::vec4(0, 1, 0, 0));
 }
 
 void SupportCanvas3D::setSceneToShapes() {
