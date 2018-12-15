@@ -33,8 +33,11 @@ void main()
     float lumaRange = lumaMax - lumaMin;
 
     // If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA.
-    if(true || lumaRange < max(0.0312,lumaMax*0.125)){
+    if(lumaRange < max(0.0312,lumaMax*0.125)){
         fragColor = vec4(colorCenter, 1);
+        return;
+    } else {
+        fragColor = vec4(1, 0, 0, 1);
         return;
     }
     // Query the 4 remaining corners lumas.
