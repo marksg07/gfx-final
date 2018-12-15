@@ -120,6 +120,11 @@ float pointShadow(vec3 fragToLight, int i)
     float currentDepth = length(fragToLight);
 
     float visibility = 1.0;
+
+    if (useShadowMapping == 0) {
+        return visibility;
+    }
+
     for (int s = 0; s < poissonDisk3Samples; s++){
         float closestDepth = texture(shadowCubeMap[i], fragToLight + poissonDisk3[s] / 700.0).r;
         closestDepth *= far_plane;

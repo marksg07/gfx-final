@@ -22,6 +22,7 @@ typedef struct ObjectNode {
     glm::mat4x4 trans;
     glm::mat4x4 invtrans;
     glm::vec3 minbound, maxbound;
+    bool disablePhysics = false;
 } object_node_t;
 
 class Scene {
