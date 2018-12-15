@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QMessageBox>
 #include <QApplication>
+#include <QLabel>
 
 #include "BGRA.h"
 #include "CamtransCamera.h"
@@ -11,6 +12,7 @@
 #include "SceneviewScene.h"
 #include "Settings.h"
 
+#include <stdio.h>
 #include <iostream>
 #include "gl/GLDebug.h"
 #include "CS123XmlSceneParser.h"
@@ -284,6 +286,13 @@ void SupportCanvas3D::on_showFXAAEdges_changed(int val) {
 
 void SupportCanvas3D::on_shadowMapping_changed(int val) {
     settings.useShadowMapping = val;
+}
+
+void SupportCanvas3D::setFPS(float fps) {
+    QLabel *label = this->window()->findChild<QLabel*>("fps_counter");
+    char buffer[20];
+    std::sprintf(buffer, "%.1f fps", fps);
+    label->setText(buffer);
 }
 
 void SupportCanvas3D::mousePressEvent(QMouseEvent *event) {

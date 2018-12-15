@@ -57,6 +57,8 @@ public:
     // This function will be called by the UI when the settings have changed.
     virtual void settingsChanged();
 
+    void setFPS(float fps);
+
 public slots:
     // These will be called by the corresponding UI buttons on the Camtrans dock
     void resetUpVector();
