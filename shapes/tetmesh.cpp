@@ -18,7 +18,7 @@
 
 //const int FLOOR_Y = -8;
 const int FLOOR_Y = -4;
-const int FLOOR_RADIUS = 9;
+const int FLOOR_RADIUS = 9.0;
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
