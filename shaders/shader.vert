@@ -14,6 +14,7 @@ uniform mat4 m;
 out vec4 position_cameraSpace;
 out vec4 normal_cameraSpace;
 out vec4 obj_position;
+out vec4 vertexToEye;
 
 void main() {
     texc = texCoord;
@@ -25,6 +26,8 @@ void main() {
     vec4 position_worldSpace = m * vec4(position, 1.0);
     vec4 normal_worldSpace = vec4(normalize(mat3(transpose(inverse(m))) * normal), 0);
 
+
+    vertexToEye = -normalize(position_cameraSpace);
 
     gl_Position = p * position_cameraSpace;
 }

@@ -34,6 +34,9 @@ uniform mat4 p;
 uniform mat4 v;
 uniform mat4 m;
 
+uniform samplerCube envMap;
+bool doEnvMap;
+
 in vec4 position_cameraSpace;
 in vec4 normal_cameraSpace;
 in vec4 obj_position;
@@ -42,6 +45,10 @@ vec3 o_amb;
 vec3 o_diff;
 vec3 o_spec;
 
+uniform float r0;		// The Fresnel reflectivity when the incident angle is 0
+uniform float rm;		// The roughness of the material
+
+uniform mat4 inv_view;
 
 uniform sampler2D tex;
 in vec2 texc;
@@ -60,40 +67,40 @@ vec2( 0.34495938, 0.29387760 ));
 */
 
 vec2 poissonDisk2[16] = vec2[](
-            vec2(0.97957f, 0.2811f),
-            vec2(0.794353f, 0.837025f),
-            vec2(0.117349f, 0.505758f),
-            vec2(0.468528f, 0.0111598f),
-            vec2(0.569335f, 0.3809f),
-            vec2(0.387103f, 0.809421f),
-            vec2(0.024733f, 0.927193f),
-            vec2(0.0644649f, 0.0364376f),
-            vec2(0.857662f, 0.0151163f),
-            vec2(0.873436f, 0.553479f),
-            vec2(0.302805f, 0.254103f),
-            vec2(0.336668f, 0.594892f),
-            vec2(0.691506f, 0.148172f),
-            vec2(0.624169f, 0.980038f),
-            vec2(0.0466257f, 0.262733f),
-            vec2(0.646728f, 0.665895f));
+        vec2(0.97957f, 0.2811f),
+vec2(0.794353f, 0.837025f),
+vec2(0.117349f, 0.505758f),
+vec2(0.468528f, 0.0111598f),
+vec2(0.569335f, 0.3809f),
+vec2(0.387103f, 0.809421f),
+vec2(0.024733f, 0.927193f),
+vec2(0.0644649f, 0.0364376f),
+vec2(0.857662f, 0.0151163f),
+vec2(0.873436f, 0.553479f),
+vec2(0.302805f, 0.254103f),
+vec2(0.336668f, 0.594892f),
+vec2(0.691506f, 0.148172f),
+vec2(0.624169f, 0.980038f),
+vec2(0.0466257f, 0.262733f),
+vec2(0.646728f, 0.665895f));
 
 vec3 poissonDisk3[] = vec3[] (
         vec3(0.802456f, 0.679957f, 0.145147f),
-        vec3(0.248366f, 0.147665f, 0.824477f),
-        vec3(0.857692f, 0.687459f, 0.663825f),
-        vec3(0.28284f, 0.960429f, 0.143881f),
-        vec3(0.842143f, 0.198338f, 0.853133f),
-        vec3(0.105744f, 0.858962f, 0.617928f),
-        vec3(0.47324f, 0.0397311f, 0.201728f),
-        vec3(0.00417795f, 0.432789f, 0.130358f),
-        vec3(0.443836f, 0.641571f, 0.976557f),
-        vec3(0.967166f, 0.00945927f, 0.0471094f),
-        vec3(0.327304f, 0.485439f, 0.372597f),
-        vec3(0.0930765f, 0.164078f, 0.483188f),
-        vec3(0.481253f, 0.931533f, 0.724106f),
-        vec3(0.581023f, 0.0125562f, 0.646484f),
-        vec3(0.0114362f, 0.59184f, 0.979364f),
-        vec3(0.992244f, 0.220386f, 0.508227f));
+vec3(0.248366f, 0.147665f, 0.824477f),
+vec3(0.857692f, 0.687459f, 0.663825f),
+vec3(0.28284f, 0.960429f, 0.143881f),
+vec3(0.842143f, 0.198338f, 0.853133f),
+vec3(0.105744f, 0.858962f, 0.617928f),
+vec3(0.47324f, 0.0397311f, 0.201728f),
+vec3(0.00417795f, 0.432789f, 0.130358f),
+vec3(0.443836f, 0.641571f, 0.976557f),
+vec3(0.967166f, 0.00945927f, 0.0471094f),
+vec3(0.327304f, 0.485439f, 0.372597f),
+vec3(0.0930765f, 0.164078f, 0.483188f),
+vec3(0.481253f, 0.931533f, 0.724106f),
+vec3(0.581023f, 0.0125562f, 0.646484f),
+vec3(0.0114362f, 0.59184f, 0.979364f),
+vec3(0.992244f, 0.220386f, 0.508227f));
 int poissonDisk3Samples = 16;
 
 
@@ -137,14 +144,16 @@ float pointShadow(vec3 fragToLight, int i)
 void main() {
 
 
-    vec3 texColor = texture(tex, texc*repeatUV).rgb;
-    texColor = clamp(texColor + vec3(1-useTexture), vec3(0), vec3(1));
+    /*vec3 texColor = texture(tex, texc*repeatUV).rgb;
+    texColor = clamp(texColor + vec3(1-useTexture), vec3(0), vec3(1));*/
 
     o_amb = vec3(0);
     o_diff = vec3(0);
     o_spec = vec3(0);
+    vec3 color = vec3(0);
 
     float found = 0.0;
+
     if (true) {
         o_amb = ambient_color.xyz; // Add ambient component
 
@@ -175,28 +184,53 @@ void main() {
 
             }
 
+            float k = 1;
+            float lambert = 1;
+            if (true) {
+                vec3 n = normalize(normal_cameraSpace.xyz);
+                vec3 l = normalize(vertexToLight.xyz);
+                vec3 cameraToVertex = normalize(position_cameraSpace.xyz); //remember we are in camera space!
+                vec4 inv = inv_view * vec4(reflect(cameraToVertex, n), 0);
+                vec4 reflectionColor = texture(envMap, inv.xyz);
+                vec3 u = vertexToLight.xyz;
+                vec3 v = -normalize(position_cameraSpace.xyz);
+                vec3 h = normalize((u + v).xyz);
+                float alpha = acos(dot(n, h));
+                float d = exp(-(pow(tan(alpha), 2)) / pow(rm, 2)) / (4 * pow(rm, 2) * pow(cos(alpha), 4));
+                float common_term = 2*dot(h, n)/dot(v, h);
+                float g = min(1, min(common_term * dot(v, n), common_term * dot(u, n)));
+                float f = r0 + (1 - r0)*pow(1 - cos(dot(n, cameraToVertex)), 5);
+                k = max(0, (d * f * g) / dot(v, n));
 
+
+                // Add diffuse component
+                lambert = max(0.0, dot(n, l));
+            }
 
             // Add diffuse component
             float diffuseIntensity = max(0.0, dot(vertexToLight, normal_cameraSpace));
-            o_diff += visibility * max(vec3(0), lightColors[i] * diffuse_color * diffuseIntensity);
+            o_diff = lambert * visibility * max(vec3(0), lightColors[i] * diffuse_color * diffuseIntensity);
 
             // Add specular component
             vec4 lightReflection = normalize(-reflect(vertexToLight, normal_cameraSpace));
             vec4 eyeDirection = normalize(vec4(0,0,0,1) - position_cameraSpace);
             float specIntensity = pow(max(0.0, dot(eyeDirection, lightReflection)), shininess);
-            o_spec += visibility * max (vec3(0), lightColors[i] * specular_color * specIntensity);
+            o_spec = k * visibility * max (vec3(0), lightColors[i] * specular_color * specIntensity);
 
+            color += o_diff + o_spec;
         }
+        color += o_amb;
     } else {
         //color = ambient_color + diffuse_color;
         o_amb = ambient_color;
         o_diff = diffuse_color;
         o_spec = vec3(0);
+
+        color = o_amb + o_diff + o_spec;
     }
 
-    vec3 color = clamp(o_amb + o_diff + o_spec, vec3(0), vec3(1));
+    color = clamp(color, vec3(0), vec3(1));
 
-    fragColor = vec4(color * texColor, 1);
+    fragColor = vec4(color, 1);
 
 }

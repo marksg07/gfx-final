@@ -24,6 +24,8 @@
         <file alias="shadowPoint.gsh">shaders/shadowPoint.gsh</file>
         <file alias="skybox.frag">shaders/skybox.frag</file>
         <file alias="skybox.vert">shaders/skybox.vert</file>
+        <file alias="metal.vert">shaders/metal.vert</file>
+        <file alias="metal.frag">shaders/metal.frag</file>
     </qresource>
     <qresource prefix="/resources">
         <file alias="skybox/back.jpg">resources/skybox/back.jpg</file>
