@@ -149,6 +149,7 @@ struct Settings {
     float femShearViscosity;
 
     int showFXAAEdges;
+    int useShadowMapping;
 
     int getSceneMode();
     int getCameraMode();

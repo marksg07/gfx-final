@@ -79,13 +79,15 @@ void Settings::loadSettingsOrDefaults() {
     
     // FEM
 
-    femTimeStep = 0.015;
+    femTimeStep = 0.015f;
     femStepsPerFrame = 30;
     femIncompressibility = 1000;
     femRigidity = 1000;
     femBulkViscosity = 100;
     femShearViscosity = 100;
     
+    useShadowMapping = 1;
+
     /*femTimeStep = s.value("femTimeStep", 0.1).toFloat();
     femStepsPerFrame = s.value("femStepsPerFrame", 1).toInt();
     femIncompressibility = s.value("femIncompressibility", 1.0).toFloat();

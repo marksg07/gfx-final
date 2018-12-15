@@ -49,6 +49,7 @@ public:
         } else if (m_light.type == LightType::LIGHT_POINT && settings.usePointLights) {
             shader->setTexture(base + "CubeMap[" + std::to_string(i) + "]", GL_TEXTURE_CUBE_MAP, textureID());
         }
+        shader->setUniform("useShadowMapping", settings.useShadowMapping);
     }
 
     void renderDirectional(Camera* camera);

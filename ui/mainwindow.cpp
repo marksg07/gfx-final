@@ -455,3 +455,8 @@ void MainWindow::on_showFXAAEdges_stateChanged(int val)
 {
     m_canvas3D->on_showFXAAEdges_changed(val);
 }
+
+void MainWindow::on_shadowMapping_stateChanged(int val)
+{
+    m_canvas3D->on_shadowMapping_changed(val);
+}

@@ -282,6 +282,9 @@ void SupportCanvas3D::on_showFXAAEdges_changed(int val) {
     settings.showFXAAEdges = val;
 }
 
+void SupportCanvas3D::on_shadowMapping_changed(int val) {
+    settings.useShadowMapping = val;
+}
 
 void SupportCanvas3D::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::RightButton) {

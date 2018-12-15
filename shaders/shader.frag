@@ -14,6 +14,7 @@ uniform samplerCube shadowCubeMap[MAX_LIGHTS];
 out vec4 fragColor;
 
 uniform bool useLighting;
+uniform int useShadowMapping;
 
 uniform int useTexture = 0;
 uniform vec2 repeatUV;
@@ -99,6 +100,10 @@ int poissonDisk3Samples = 16;
 float dirShadow(vec4 vertexToLight, int i)
 {
     float visibility = 1.0;
+
+    if (useShadowMapping == 0) {
+        return visibility;
+    }
 
     bias = clamp(0.005 * tan(acos(clamp(dot(normal_cameraSpace, -vertexToLight), 0, 1))), 0.0, 0.01);
     vec4 shadowCoord = shadowMat[i] * m * obj_position;

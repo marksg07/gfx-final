@@ -119,6 +119,7 @@ public slots:
     void on_femStepOnce_clicked();
     void on_femRestart_clicked();
     void on_showFXAAEdges_stateChanged(int);
+    void on_shadowMapping_stateChanged(int);
 };
 
 #endif // MAINWINDOW_H

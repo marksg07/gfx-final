@@ -187,18 +187,14 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     if (m_lights.size() == 0){
         return;
     }
-
-#if 1
     // shadow mapping
 
-
-    for(auto& m : m_shadowMaps)
-    {
-        m->update(context->getCamera());
+    if (settings.useShadowMapping) {
+        for(auto& m : m_shadowMaps)
+        {
+            m->update(context->getCamera());
+        }
     }
-
-
-
 
     m_fbo->bind();
 
@@ -223,7 +219,6 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
 
     m_phongShader->unbind();
-#endif
 
     glDepthFunc(GL_LEQUAL);
     m_skyboxShader->bind();
@@ -246,6 +241,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     float ratio = static_cast<QGuiApplication *>(QCoreApplication::instance())->devicePixelRatio();
     glViewport(0, 0, context->width() * ratio, context->height() * ratio);
 
+    // m_shadowMapShader is actually the FXAA shader lol
     m_shadowMapShader->bind();
     float w = context->width() * ratio;
     float h = context->height() * ratio;

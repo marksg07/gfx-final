@@ -83,7 +83,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>290</width>
+             <width>283</width>
              <height>3059</height>
             </rect>
            </property>
@@ -1059,7 +1059,7 @@
   <widget class="QDockWidget" name="femDock">
    <property name="minimumSize">
     <size>
-     <width>305</width>
+     <width>312</width>
      <height>486</height>
     </size>
    </property>
@@ -1207,6 +1207,16 @@
        </property>
        <property name="tristate">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="0">
+      <widget class="QCheckBox" name="checkBox">
+       <property name="text">
+        <string>Shadow Mapping</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -1949,6 +1959,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_shadowMapping_stateChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>106</x>
+     <y>2747</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>708</x>
+     <y>2762</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>checkAllRayFeatures()</slot>
@@ -1978,5 +2004,6 @@
   <slot>on_femStop_clicked()</slot>
   <slot>on_showFXAAEdges_stateChanged()</slot>
   <slot>on_showFXAAEdges_stateChanged(int)</slot>
+  <slot>on_shadowMapping_stateChanged(int)</slot>
  </slots>
 </ui>
