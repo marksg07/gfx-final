@@ -16,7 +16,7 @@
 #include "timing.h"
 #include "tetmeshparser.h"
 
-const int FLOOR_Y = -3;
+const int FLOOR_Y = -8;
 
 /*
  * Incompressibility: 1000
@@ -262,8 +262,14 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     auto calc_forces_i = [&](int i) {
         auto tet = m_tets[i];
         if(tetInverted(points, tet)) {
-            printf("Inverted tet (#%d) found!\n", i);
-            fflush(stdout);
+            //printf("Inverted tet (#%d) found!\n", i);
+            //fflush(stdout);
+            m_tets.clear();
+            m_points.clear();
+            m_vels.clear();
+            //m_faces.clear();
+
+            return;
         }
 
         auto p1 = points[tet.p1];
@@ -319,7 +325,8 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
 }
 
 // number of newtons to apply when penetrated 1  meter^2
-#define PENALTY_ACCEL_K 50000.f
+//#define PENALTY_ACCEL_K 50000.f
+#define PENALTY_ACCEL_K 10000.f
 
 void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
     for(long unsigned int i = 0;i < points.size(); i++) {
@@ -573,5 +580,8 @@ void TetMesh::draw() {
     shape.setAttribute(ShaderAttrib::POSITION, 3, 0, VBOAttribMarker::DATA_TYPE::FLOAT, false);
     shape.setAttribute(ShaderAttrib::NORMAL, 3, sizeof(GLfloat) * 3, VBOAttribMarker::DATA_TYPE::FLOAT, true);
     shape.buildVAO();
+
+    if (m_faces.size() != 0) {
     shape.draw();
+    }
 }

@@ -35,7 +35,7 @@ uniform mat4 v;
 uniform mat4 m;
 
 uniform samplerCube envMap;
-bool doEnvMap;
+uniform bool doEnvMap;
 
 in vec4 position_cameraSpace;
 in vec4 normal_cameraSpace;
@@ -186,12 +186,15 @@ void main() {
 
             float k = 1;
             float lambert = 1;
-            if (true) {
+            vec4 reflectionColor = vec4(0);
+            float f = 0;
+
+            if (doEnvMap) {
                 vec3 n = normalize(normal_cameraSpace.xyz);
                 vec3 l = normalize(vertexToLight.xyz);
                 vec3 cameraToVertex = normalize(position_cameraSpace.xyz); //remember we are in camera space!
                 vec4 inv = inv_view * vec4(reflect(cameraToVertex, n), 0);
-                vec4 reflectionColor = texture(envMap, inv.xyz);
+                reflectionColor = texture(envMap, inv.xyz);
                 vec3 u = vertexToLight.xyz;
                 vec3 v = -normalize(position_cameraSpace.xyz);
                 vec3 h = normalize((u + v).xyz);
@@ -199,7 +202,7 @@ void main() {
                 float d = exp(-(pow(tan(alpha), 2)) / pow(rm, 2)) / (4 * pow(rm, 2) * pow(cos(alpha), 4));
                 float common_term = 2*dot(h, n)/dot(v, h);
                 float g = min(1, min(common_term * dot(v, n), common_term * dot(u, n)));
-                float f = r0 + (1 - r0)*pow(1 - cos(dot(n, cameraToVertex)), 5);
+                f = r0 + (1 - r0)*pow(1 - cos(dot(n, cameraToVertex)), 5);
                 k = max(0, (d * f * g) / dot(v, n));
 
 
@@ -217,7 +220,11 @@ void main() {
             float specIntensity = pow(max(0.0, dot(eyeDirection, lightReflection)), shininess);
             o_spec = k * visibility * max (vec3(0), lightColors[i] * specular_color * specIntensity);
 
-            color += o_diff + o_spec;
+            if (doEnvMap) {
+                color += mix(o_diff + o_spec, reflectionColor.xyz, f);
+            } else {
+                color += o_diff + o_spec;
+            }
         }
         color += o_amb;
     } else {
