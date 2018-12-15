@@ -19,3 +19,7 @@ void OpenGLScene::setClearColor() {
 void OpenGLScene::settingsChanged() {
 
 }
+
+void OpenGLScene::onResize(int x, int y) {
+
+}

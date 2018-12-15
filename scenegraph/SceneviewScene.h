@@ -70,6 +70,7 @@ public:
 
 
     void renderGeometry(CS123::GL::Shader* shader);
+    void onResize(int, int);
 
 private:
 

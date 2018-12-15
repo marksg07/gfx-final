@@ -1,4 +1,7 @@
 #version 330 core
+
+// From: https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+
 layout (triangles) in;
 layout (triangle_strip, max_vertices=18) out;
 

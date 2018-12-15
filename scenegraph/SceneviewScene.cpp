@@ -66,8 +66,6 @@ SceneviewScene::SceneviewScene()
     m_fsq = std::make_unique<CS123::GL::FullScreenQuad>();
 
     m_skybox = std::make_unique<CubeMap>(":/resources/skybox", ".jpg");
-    m_fbo = std::make_unique<FBO>(1, FBO::DEPTH_STENCIL_ATTACHMENT::DEPTH_ONLY, 1024, 1024,
-                                  TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
 
 }
 
@@ -367,5 +365,11 @@ void SceneviewScene::renderGeometry() {
 }
 void SceneviewScene::settingsChanged() {
     // TODO: [SCENEVIEW] Fill this in if applicable.
+}
+
+void SceneviewScene::onResize(int width, int height) {
+    int a = std::max(width, height);
+    m_fbo = std::make_unique<FBO>(1, FBO::DEPTH_STENCIL_ATTACHMENT::DEPTH_ONLY, a, a,
+                                  TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
 }
 

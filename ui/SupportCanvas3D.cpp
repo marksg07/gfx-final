@@ -53,7 +53,7 @@ CamtransCamera *SupportCanvas3D::getCamtransCamera() {
 }
 
 void SupportCanvas3D::startUpdateLoop() {
-    m_updateTimer.start(1000.0/240);
+    m_updateTimer.start(0);
 }
 
 void SupportCanvas3D::stopUpdateLoop() {
@@ -75,7 +75,7 @@ void SupportCanvas3D::initializeGL() {
     initializeScenes();
     setSceneFromSettings();
 
-    settingsChanged();   
+    settingsChanged();
 
 }
 
@@ -148,6 +148,7 @@ void SupportCanvas3D::loadSceneviewSceneFromParser(CS123XmlSceneParser &parser) 
     Scene::parse(m_sceneviewScene.get(), &parser);
     m_settingsDirty = true;
     m_sceneviewScene->parsingDone();
+    m_sceneviewScene->onResize(this->width(), this->height());
     startUpdateLoop();
 }
 
@@ -311,4 +312,8 @@ void SupportCanvas3D::wheelEvent(QWheelEvent *event) {
 
 void SupportCanvas3D::resizeEvent(QResizeEvent *event) {
     emit aspectRatioChanged();
+    if (m_currentScene != nullptr) {
+        printf("%d, %d\n", event->size().width(), event->size().height());
+        m_currentScene->onResize(event->size().width(), event->size().height());
+    }
 }

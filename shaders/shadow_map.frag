@@ -9,32 +9,38 @@ out vec4 fragColor;
 
 float[] QUALITY = float[](1, 1, 1, 1, 1, 1, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0);
 
-float rgb2luma(vec4 rgb) {
+float rgb2luma(vec3 rgb) {
     return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
 }
 
 void main()
 {
     vec4 colorCenter = texture(image, texc);
-    float lumaCenter = rgb2luma(colorCenter);
 
-    float lumaUp = rgb2luma(texture(image, texc + vec2(0, -1)).xyz);
-    float lumaDown = rgb2luma(texture(image, texc + vec2(0, 1)).xyz);
-    float lumaLeft = rgb2luma(texture(image, texc + vec2(0, -1)).xyz);
-    float lumaRight = rgb2luma(texture(image, texc + vec2(0, 1)).xyz);
+    // Luma at the current fragment
+    float lumaCenter = rgb2luma(colorCenter.xyz);
 
-    float lumaMin = min(lumaCenter, min(lumaUp, min(lumaDown, min(lumaLeft, lumaRight))));
-    float lumaMax = max(lumaCenter, max(lumaUp, max(lumaDown, max(lumaLeft, lumaRight))));
+    // Luma at the four direct neighbours of the current fragment.
+    float lumaDown = rgb2luma(textureOffset(image,texc,ivec2(0,-1)).rgb);
+    float lumaUp = rgb2luma(textureOffset(image,texc,ivec2(0,1)).rgb);
+    float lumaLeft = rgb2luma(textureOffset(image,texc,ivec2(-1,0)).rgb);
+    float lumaRight = rgb2luma(textureOffset(image,texc,ivec2(1,0)).rgb);
 
+    // Find the maximum and minimum luma around the current fragment.
+    float lumaMin = min(lumaCenter,min(min(lumaDown,lumaUp),min(lumaLeft,lumaRight)));
+    float lumaMax = max(lumaCenter,max(max(lumaDown,lumaUp),max(lumaLeft,lumaRight)));
+
+    // Compute the delta.
     float lumaRange = lumaMax - lumaMin;
 
-    if (lumaRange < max(0.0312, lumaMax*0.125)) {
-        fragColor = colorCenter;
+    // If the luma variation is lower that a threshold (or if we are in a really dark area), we are not on an edge, don't perform any AA.
+    if(lumaRange < max(0.0312,lumaMax*0.125)){
+        fragColor = vec4(colorCenter);
         return;
     } else if (showFXAAEdges > 0) {
         fragColor = vec4(1, 0, 0, 1);
+        return;
     }
-
     // Query the 4 remaining corners lumas.
     float lumaDownLeft = rgb2luma(textureOffset(image,texc,ivec2(-1,-1)).rgb);
     float lumaUpRight = rgb2luma(textureOffset(image,texc,ivec2(1,1)).rgb);
