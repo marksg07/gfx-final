@@ -120,6 +120,7 @@ public slots:
     void on_femRestart_clicked();
     void on_showFXAAEdges_stateChanged(int);
     void on_shadowMapping_stateChanged(int);
+    void on_metalBalls_stateChanged(int arg1);
 };
 
 #endif // MAINWINDOW_H

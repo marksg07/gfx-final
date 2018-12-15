@@ -87,6 +87,7 @@ public slots:
     void on_femRestart_clicked();
     void on_showFXAAEdges_changed(int);
     void on_shadowMapping_changed(int);
+    void on_metalBalls_changed(int);
 signals:
     void aspectRatioChanged();
 

@@ -288,6 +288,10 @@ void SupportCanvas3D::on_shadowMapping_changed(int val) {
     settings.useShadowMapping = val;
 }
 
+void SupportCanvas3D::on_metalBalls_changed(int val) {
+    settings.metalBalls = val;
+}
+
 void SupportCanvas3D::setFPS(float fps) {
     QLabel *label = this->window()->findChild<QLabel*>("fps_counter");
     char buffer[20];

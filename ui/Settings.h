@@ -150,6 +150,7 @@ struct Settings {
 
     int showFXAAEdges;
     int useShadowMapping;
+    int metalBalls;
 
     int getSceneMode();
     int getCameraMode();
