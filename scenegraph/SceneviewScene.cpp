@@ -256,6 +256,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
 
     if (frames % 100 == 0) {
         printf("FPS: %f\n", fps);
+        context->setFPS(fps);
         frames = 0;
     }
 }
