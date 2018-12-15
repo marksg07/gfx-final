@@ -83,7 +83,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>312</width>
+             <width>290</width>
              <height>3059</height>
             </rect>
            </property>
@@ -1059,7 +1059,7 @@
   <widget class="QDockWidget" name="femDock">
    <property name="minimumSize">
     <size>
-     <width>274</width>
+     <width>305</width>
      <height>486</height>
     </size>
    </property>
@@ -1170,6 +1170,16 @@
       <widget class="QPushButton" name="femRestart">
        <property name="text">
         <string>Restart simulation</string>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0">
+      <widget class="QCheckBox" name="showFXAAEdges">
+       <property name="text">
+        <string>Show FXAA Edges</string>
+       </property>
+       <property name="tristate">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
@@ -1888,11 +1898,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>90</x>
-     <y>2372</y>
+     <y>2417</y>
     </hint>
     <hint type="destinationlabel">
      <x>851</x>
      <y>2291</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>showFXAAEdges</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_showFXAAEdges_stateChanged()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>110</x>
+     <y>2721</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>683</x>
+     <y>2721</y>
     </hint>
    </hints>
   </connection>
@@ -1923,5 +1949,6 @@
   <slot>resetSliders()</slot>
   <slot>on_femSimulate_clicked()</slot>
   <slot>on_femStop_clicked()</slot>
+  <slot>on_showFXAAEdges_stateChanged()</slot>
  </slots>
 </ui>

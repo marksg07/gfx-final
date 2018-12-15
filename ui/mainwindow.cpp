@@ -445,3 +445,8 @@ void MainWindow::on_femStepOnce_clicked() {
 void MainWindow::on_femRestart_clicked() {
     m_canvas3D->on_femRestart_clicked();
 }
+
+void MainWindow::on_showFXAAEdges_stateChanged(int arg1)
+{
+    m_canvas3D->on_showFXAAEdges_changed(arg1);
+}

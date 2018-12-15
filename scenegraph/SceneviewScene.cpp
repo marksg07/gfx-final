@@ -251,6 +251,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_shadowMapShader->bind();
     float w = context->width() * ratio;
     float h = context->height() * ratio;
+    m_shadowMapShader->setUniform("showFXAAEdges", settings.showFXAAEdges);
     m_shadowMapShader->setUniform("inverseScreenSize", glm::vec2(1.0 / w, 1.0 / h));
     m_fbo->getColorAttachment(0).bind();
     m_fsq->draw();

@@ -148,6 +148,8 @@ struct Settings {
     float femBulkViscosity;
     float femShearViscosity;
 
+    int showFXAAEdges;
+
     int getSceneMode();
     int getCameraMode();
 

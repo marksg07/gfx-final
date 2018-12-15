@@ -3,18 +3,19 @@
 in vec2 texc;
 uniform sampler2D image;
 
+uniform int showFXAAEdges;
 uniform vec2 inverseScreenSize;
-out vec3 fragColor;
+out vec4 fragColor;
 
 float[] QUALITY = float[](1, 1, 1, 1, 1, 1, 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0);
 
-float rgb2luma(vec3 rgb) {
+float rgb2luma(vec4 rgb) {
     return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
 }
 
 void main()
 {
-    vec3 colorCenter = texture(image, texc).xyz;
+    vec4 colorCenter = texture(image, texc);
     float lumaCenter = rgb2luma(colorCenter);
 
     float lumaUp = rgb2luma(texture(image, texc + vec2(0, -1)).xyz);
@@ -30,6 +31,8 @@ void main()
     if (lumaRange < max(0.0312, lumaMax*0.125)) {
         fragColor = colorCenter;
         return;
+    } else if (showFXAAEdges > 0) {
+        fragColor = vec4(1, 0, 0, 1);
     }
 
     // Query the 4 remaining corners lumas.
@@ -192,5 +195,5 @@ void main()
     }
 
     // Read the color at the new UV coordinates, and use it.
-    fragColor = texture(image,finalUv).rgb;
+    fragColor = texture(image,finalUv);
 }
