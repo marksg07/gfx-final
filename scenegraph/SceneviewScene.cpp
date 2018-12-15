@@ -82,28 +82,24 @@ void SceneviewScene::parsingDone() {
         if(prim.type == PrimitiveType::PRIMITIVE_MESH) {
             printf("Mesh found: %s\n", prim.meshfile.c_str());
             fflush(stdout);
-            TetMesh mesh(m_nodes[i], m_meshTemplateCache);
-            m_meshes.push_back(mesh);
+            m_meshes.push_back(std::make_unique<TetMesh>(m_nodes[i], m_meshTemplateCache));
         }
         else if(prim.type == PrimitiveType::PRIMITIVE_SPHERE) {
             object_node_t node = m_nodes[i];
             node.primitive.meshfile = "example-meshes/sphere.mesh";
-            TetMesh mesh(node, m_meshTemplateCache);
-            m_meshes.push_back(mesh);
+            m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
         }
         else if(prim.type == PrimitiveType::PRIMITIVE_CUBE) {
             object_node_t node = m_nodes[i];
             // if it's a cube and is first element, turn off physics
             node.disablePhysics = true;
             node.primitive.meshfile = "example-meshes/cube.mesh";
-            TetMesh mesh(node, m_meshTemplateCache);
-            m_meshes.push_back(mesh);
+            m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
         }
         else if(prim.type == PrimitiveType::PRIMITIVE_CONE) {
             object_node_t node = m_nodes[i];
             node.primitive.meshfile = "example-meshes/cone.mesh";
-            TetMesh mesh(node, m_meshTemplateCache);
-            m_meshes.push_back(mesh);
+            m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
         }
         //mesh.buildShape();
         //m_mesh[prim.meshfile] = std::move(mesh.getOpenGLShape());
@@ -341,30 +337,40 @@ void SceneviewScene::renderGeometry(CS123::GL::Shader* shader) {
     //while(!m_ready);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    for(unsigned long i = 0; i < m_meshes.size(); i++) {
-        TetMesh& tetmesh = m_meshes[i];
-        auto onode = tetmesh.getONode();
+    for(auto&& tetmesh : m_meshes) {
+        auto onode = tetmesh->getONode();
         shader->setUniform("m", glm::mat4(1.0f));
         //shader->applyMaterial(onode.primitive.material);
-        tetmesh.draw();
+        tetmesh->draw();
     }
 }
 
 void SceneviewScene::renderGeometry() {
     //while(!m_ready);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    for(unsigned long i = 0; i < m_meshes.size(); i++) {
-        TetMesh& tetmesh = m_meshes[i];
-        auto onode = tetmesh.getONode();
+    int i = -1;
+    for(auto&& tetmesh = m_meshes.begin(); tetmesh != m_meshes.end();) {
+        i++; // assure we dont break out early or something
+        bool dead = false;
+        auto onode = (*tetmesh)->getONode();
         m_phongShader->setUniform("m", glm::mat4(1.0f));
         m_phongShader->applyMaterial(onode.primitive.material);
         if(m_running) {
             float timePerStep = settings.femTimeStep / settings.femStepsPerFrame;
             for(int j = 0; j < settings.femStepsPerFrame; j++) {
-                tetmesh.update(timePerStep);
+                if((*tetmesh)->update(timePerStep)) {
+                    // mesh has to die
+                    tetmesh = m_meshes.erase(tetmesh);
+                    //toDie.push_back(i);
+                    dead = true;
+                    break;
+                }
             }
         }
-        tetmesh.draw();
+        if(!dead) {
+            (*tetmesh)->draw();
+            tetmesh++;
+        }
     }
 }
 void SceneviewScene::settingsChanged() {

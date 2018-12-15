@@ -18,6 +18,7 @@
 
 //const int FLOOR_Y = -8;
 const int FLOOR_Y = -4;
+const int KILL_FLOOR_Y = -10;
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
@@ -261,7 +262,7 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     //for(long unsigned int i = 0;i < m_tets.size(); i++) {
     auto calc_forces_i = [&](int i) {
         auto tet = m_tets[i];
-        if(tetInverted(points, tet)) {
+        /*if(tetInverted(points, tet)) {
             //printf("Inverted tet (#%d) found!\n", i);
             //fflush(stdout);
             m_tets.clear();
@@ -270,7 +271,7 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
             //m_faces.clear();
 
             return;
-        }
+        }*/
 
         auto p1 = points[tet.p1];
         auto p2 = points[tet.p2];
@@ -337,6 +338,20 @@ void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const
     }
 }
 
+glm::vec3 calculateFunnelAccel(glm::vec3) {
+
+}
+
+/*void TetMesh::computeCollisionForcesFunnel(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
+    for(long unsigned int i = 0;i < points.size(); i++) {
+        glm::vec3 penaltyAccel = calculateFunnelAccel(points[i]);
+        if(points[i].y < floorY) {
+            glm::vec3 penaltyForce = m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
+            forcePerNode[i] += penaltyForce;
+        }
+    }
+}
+*/
 void TetMesh::computeAllForces(std::vector<glm::vec3> &forcePerNode) {
     std::fill(forcePerNode.begin(), forcePerNode.end(), glm::vec3());
     // first add grav
@@ -357,12 +372,23 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
     computeCollisionForces(forcePerNode, points, vels, FLOOR_Y);
 }
 
-void TetMesh::update(float timestep) {
-    // step 1: get all forces.
-
-    if (m_onode.disablePhysics) {
-        return;
+bool TetMesh::checkBad() {
+    for(int i = 0; i < m_points.size(); i++) {
+        if(m_points[i].y < KILL_FLOOR_Y)
+            return true;
     }
+    for(int i = 0; i < m_tets.size(); i++) {
+        if(tetInverted(m_points, m_tets[i]))
+            return true;
+    }
+    return false;
+}
+
+// the bool is true if this object has to die; i.e. it inverts or goes below floor.
+bool TetMesh::update(float timestep) {
+    if(m_onode.disablePhysics)
+        return false;
+    // step 1: get all forces.
     std::vector<glm::vec3> forces(m_points.size()),
             dxk1(m_points.size()),
             dxk2(m_points.size()),
@@ -421,6 +447,7 @@ void TetMesh::update(float timestep) {
     }
 
     calcNorms();
+    return checkBad();
 }
 
 void getNormalsFromFaces(const std::unordered_map<glm::ivec3, bool, ivec3_hash>& faces, const std::vector<glm::vec3>& points, std::vector<glm::vec3>& norms) {

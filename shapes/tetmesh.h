@@ -68,9 +68,10 @@ public:
     TetMesh(object_node_t node, std::unordered_map<std::string, std::unique_ptr<TetMesh>>& map);
     TetMesh(std::string filename, glm::mat4x4 trans=glm::mat4x4(), std::string nodefile=std::string());
     std::vector<TetMesh> fracture(int tetIdx, glm::vec3 fracNorm);
-    void update(float timestep);
+    bool update(float timestep);
     void draw();
     const object_node_t& getONode() { return m_onode; }
+    std::vector<glm::vec3> getFaceTris();
 private:
     void calcFacesAndNorms();
     void calcNorms();
@@ -81,7 +82,7 @@ private:
     void computeCollisionForces(std::vector<glm::vec3>& forcePerNode,  const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY);
     void calcBaryTransforms();
     void calcPointMasses();
-
+    bool checkBad();
     int addNewPoint();
     std::vector<glm::vec3> m_points;
     std::vector<bool> m_isCrackTip;
@@ -95,6 +96,7 @@ private:
     mat_t m_material;
     // using lumped mass model, so rather than store an entire NxN matrix we will just store a vector
     std::vector<float> m_pointMasses;
+    bool mustDie;
 
 };
 
