@@ -93,6 +93,8 @@ void SceneviewScene::parsingDone() {
         }
         else if(prim.type == PrimitiveType::PRIMITIVE_CUBE) {
             object_node_t node = m_nodes[i];
+            // if it's a cube and is first element, turn off physics
+            node.disablePhysics = true;
             node.primitive.meshfile = "example-meshes/cube.mesh";
             TetMesh mesh(node, m_meshTemplateCache);
             m_meshes.push_back(mesh);

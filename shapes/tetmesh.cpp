@@ -16,8 +16,8 @@
 #include "timing.h"
 #include "tetmeshparser.h"
 
-const int FLOOR_Y = -8;
-
+//const int FLOOR_Y = -8;
+const int FLOOR_Y = -4;
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
@@ -360,6 +360,9 @@ void TetMesh::computeAllForcesFrom(std::vector<glm::vec3> &forcePerNode, const s
 void TetMesh::update(float timestep) {
     // step 1: get all forces.
 
+    if (m_onode.disablePhysics) {
+        return;
+    }
     std::vector<glm::vec3> forces(m_points.size()),
             dxk1(m_points.size()),
             dxk2(m_points.size()),
