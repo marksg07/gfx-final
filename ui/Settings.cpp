@@ -79,7 +79,7 @@ void Settings::loadSettingsOrDefaults() {
     
     // FEM
 
-    femTimeStep = 0.05f;
+    femTimeStep = 0.1f;
     femStepsPerFrame = 30;
     femIncompressibility = 10000;
     femRigidity = 10000;
@@ -88,6 +88,7 @@ void Settings::loadSettingsOrDefaults() {
     
     useShadowMapping = 1;
     metalBalls = 1;
+    usePointLights = true;
 
     /*femTimeStep = s.value("femTimeStep", 0.1).toFloat();
     femStepsPerFrame = s.value("femStepsPerFrame", 1).toInt();

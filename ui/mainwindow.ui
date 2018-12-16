@@ -83,7 +83,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>283</width>
+             <width>276</width>
              <height>3059</height>
             </rect>
            </property>
@@ -1059,7 +1059,7 @@
   <widget class="QDockWidget" name="femDock">
    <property name="minimumSize">
     <size>
-     <width>312</width>
+     <width>319</width>
      <height>486</height>
     </size>
    </property>
@@ -1074,7 +1074,7 @@
      <item row="0" column="0">
       <widget class="QPushButton" name="femSimulate">
        <property name="text">
-        <string>Simulate</string>
+        <string>Run</string>
        </property>
       </widget>
      </item>
@@ -1134,95 +1134,102 @@
      <item row="1" column="0">
       <widget class="QPushButton" name="femStop">
        <property name="text">
-        <string>Stop simulation</string>
+        <string>Pause</string>
        </property>
       </widget>
      </item>
      <item row="3" column="0">
+      <widget class="QPushButton" name="delete_all">
+       <property name="text">
+        <string>Delete All</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
       <widget class="QLineEdit" name="femTimeStep">
        <property name="text">
         <string>0.015</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="7" column="1">
       <widget class="QLabel" name="label_7">
        <property name="text">
         <string>Time step (ms)</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="8" column="0">
       <widget class="QLineEdit" name="femStepsPerFrame">
        <property name="text">
         <string>30</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="8" column="1">
       <widget class="QLabel" name="label_8">
        <property name="text">
         <string>Steps/Frame</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="9" column="0">
       <widget class="QLineEdit" name="femIncompressibility">
        <property name="text">
         <string>10000</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="9" column="1">
       <widget class="QLabel" name="label_3">
        <property name="text">
         <string>Incompressibility</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="10" column="0">
       <widget class="QLineEdit" name="femRigidity">
        <property name="text">
         <string>10000</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="10" column="1">
       <widget class="QLabel" name="label_4">
        <property name="text">
         <string>Rigidity</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="11" column="0">
       <widget class="QLineEdit" name="femBulkViscosity">
        <property name="text">
         <string>100</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="11" column="1">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>Bulk Viscosity</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="12" column="0">
       <widget class="QLineEdit" name="femShearViscosity">
        <property name="text">
         <string>100</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="12" column="1">
       <widget class="QLabel" name="label_6">
        <property name="text">
         <string>Shear Viscosity</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
+     <item row="13" column="0">
       <widget class="QCheckBox" name="showFXAAEdges">
        <property name="enabled">
         <bool>true</bool>
@@ -1235,7 +1242,7 @@
        </property>
       </widget>
      </item>
-     <item row="10" column="0">
+     <item row="14" column="0">
       <widget class="QCheckBox" name="checkBox">
        <property name="text">
         <string>Shadow Mapping</string>
@@ -1245,13 +1252,20 @@
        </property>
       </widget>
      </item>
-     <item row="11" column="0">
+     <item row="15" column="0">
       <widget class="QCheckBox" name="checkBox_2">
        <property name="text">
         <string>Metal Balls</string>
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="addObject">
+       <property name="text">
+        <string>Add Object</string>
        </property>
       </widget>
      </item>
@@ -1350,7 +1364,6 @@
   <tabstop>rayRefraction</tabstop>
   <tabstop>rayMultiThreading</tabstop>
   <tabstop>rayUseKDTree</tabstop>
-  <tabstop>femSimulate</tabstop>
   <tabstop>rayBumpMapping</tabstop>
   <tabstop>rayParallax</tabstop>
   <tabstop>raySteepParallax</tabstop>
@@ -1380,7 +1393,6 @@
   <tabstop>cameraFarSlider</tabstop>
   <tabstop>resetSliders</tabstop>
   <tabstop>tabWidget</tabstop>
-  <tabstop>femStop</tabstop>
   <tabstop>femTimeStep</tabstop>
  </tabstops>
  <resources/>
@@ -1985,7 +1997,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>124</x>
-     <y>2598</y>
+     <y>2623</y>
     </hint>
     <hint type="destinationlabel">
      <x>750</x>
@@ -2001,7 +2013,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>106</x>
-     <y>2623</y>
+     <y>2648</y>
     </hint>
     <hint type="destinationlabel">
      <x>708</x>
@@ -2017,11 +2029,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>78</x>
-     <y>2651</y>
+     <y>2676</y>
     </hint>
     <hint type="destinationlabel">
      <x>673</x>
      <y>2640</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>delete_all</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_delete_all_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>87</x>
+     <y>2406</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>766</x>
+     <y>2434</y>
     </hint>
    </hints>
   </connection>
@@ -2056,5 +2084,6 @@
   <slot>on_showFXAAEdges_stateChanged(int)</slot>
   <slot>on_shadowMapping_stateChanged(int)</slot>
   <slot>on_metalBalls_stateChanged(int)</slot>
+  <slot>on_delete_all_clicked()</slot>
  </slots>
 </ui>

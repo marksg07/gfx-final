@@ -18,9 +18,7 @@
 #include "ThreadPool.h"
 
 //const int FLOOR_Y = -8;
-const int FLOOR_Y = -4;
-const int KILL_FLOOR_Y = -10;
-const int FLOOR_RADIUS = 9.0;
+
 
 /*
  * Incompressibility: 1000
@@ -628,5 +626,11 @@ void TetMesh::draw() {
 
     if (m_faces.size() != 0) {
     shape.draw();
+    }
+}
+
+void TetMesh::offsetPos(glm::vec3 offset) {
+    for(int i = 0; i < m_points.size(); i++) {
+        m_points[i] += offset;
     }
 }
