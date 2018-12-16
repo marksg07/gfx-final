@@ -292,6 +292,16 @@ void SupportCanvas3D::on_metalBalls_changed(int val) {
     settings.metalBalls = val;
 }
 
+void SupportCanvas3D::on_delete_all_clicked() {
+    if(m_sceneviewScene)
+        m_sceneviewScene->delete_all();
+}
+
+void SupportCanvas3D::on_addObject_clicked() {
+    if (m_sceneviewScene)
+        m_sceneviewScene->create_random();
+}
+
 void SupportCanvas3D::setFPS(float fps) {
     QLabel *label = this->window()->findChild<QLabel*>("fps_counter");
     char buffer[20];

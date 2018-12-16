@@ -89,6 +89,8 @@ public slots:
     void on_showFXAAEdges_changed(int);
     void on_shadowMapping_changed(int);
     void on_metalBalls_changed(int);
+    void on_delete_all_clicked();
+    void on_addObject_clicked();
 signals:
     void aspectRatioChanged();
 

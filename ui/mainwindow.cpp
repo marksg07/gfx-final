@@ -237,7 +237,7 @@ void MainWindow::fileOpen() {
     activateCanvas3D();
     QString file = QFileDialog::getOpenFileName(this,
                                                 QString(),
-                                                "/course/cs123/data/",
+                                                "./mesh-tests/",
                                                 QString(),
                                                 nullptr,
                                                 QFileDialog::Option::DontUseNativeDialog);
@@ -464,4 +464,14 @@ void MainWindow::on_shadowMapping_stateChanged(int val)
 void MainWindow::on_metalBalls_stateChanged(int arg1)
 {
     m_canvas3D->on_metalBalls_changed(arg1);
+}
+
+void MainWindow::on_delete_all_clicked()
+{
+    m_canvas3D->on_delete_all_clicked();
+}
+
+void MainWindow::on_addObject_clicked()
+{
+    m_canvas3D->on_addObject_clicked();
 }

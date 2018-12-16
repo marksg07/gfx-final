@@ -88,6 +88,7 @@ void Settings::loadSettingsOrDefaults() {
     
     useShadowMapping = 1;
     metalBalls = 1;
+    usePointLights = true;
 
     /*femTimeStep = s.value("femTimeStep", 0.1).toFloat();
     femStepsPerFrame = s.value("femStepsPerFrame", 1).toInt();
