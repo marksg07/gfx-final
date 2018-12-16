@@ -362,13 +362,16 @@ void SceneviewScene::delete_all() {
     m_meshes.resize(1);
 }
 
-extern const float FLOOR_RADIUS;
-
 float fRandRange(float lo, float hi) {
     return (float(rand()) / RAND_MAX) * (hi - lo) + lo;
 }
 
+int stopBeingBadRandom = 0;
+
 void SceneviewScene::create_random() {
+    stopBeingBadRandom++;
+    // qt does weird parallel stuff this time
+    srand(rand() + stopBeingBadRandom);
     object_node_t node = m_meshes[0]->getONode();
     // TODO: Add random object (cube/sphere/1tet) to scene with a random offset
     // Offset shouldn't have too high a y-value (and no lower than 0)
