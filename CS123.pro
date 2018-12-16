@@ -162,7 +162,8 @@ OTHER_FILES += shaders/shader.frag \
     shaders/skybox.vert \
     shaders/solid.vert \
     shaders/metal.frag \
-    shaders/metal.vert
+    shaders/metal.vert \
+    README.txt
 
 # Don't add the -pg flag unless you know what you are doing. It makes QThreadPool freeze on Mac OS X
 QMAKE_CXXFLAGS_RELEASE -= -O2
