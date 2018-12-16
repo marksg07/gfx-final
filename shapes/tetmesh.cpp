@@ -15,6 +15,7 @@
 #include <Eigen/Eigenvalues>
 #include "timing.h"
 #include "tetmeshparser.h"
+#include "ThreadPool.h"
 
 //const int FLOOR_Y = -8;
 
@@ -262,16 +263,13 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     //for(long unsigned int i = 0;i < m_tets.size(); i++) {
     auto calc_forces_i = [&](int i) {
         auto tet = m_tets[i];
-        /*if(tetInverted(points, tet)) {
+        if(tetInverted(points, tet)) {
             //printf("Inverted tet (#%d) found!\n", i);
             //fflush(stdout);
-            m_tets.clear();
-            m_points.clear();
-            m_vels.clear();
             //m_faces.clear();
 
             return;
-        }*/
+        }
 
         auto p1 = points[tet.p1];
         auto p2 = points[tet.p2];
@@ -319,10 +317,10 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
         //forcesMutex.unlock();
     };
 
+
     for(long unsigned int i = 0;i < m_tets.size(); i++) {
         calc_forces_i(i);
     }
-
 }
 
 // number of newtons to apply when penetrated 1  meter^2
@@ -488,7 +486,7 @@ void TetMesh::calcBaryTransforms() {
     }
 }
 
-#define MAT_DENSITY 1200
+#define MAT_DENSITY 600
 
 void TetMesh::calcPointMasses() {
     // calculate masses for each point based on tet volumes
