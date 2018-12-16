@@ -12,38 +12,8 @@
 #include "CubeMap.h"
 using namespace CS123::GL;
 #include "shapes/tetmesh.h"
+#include "shapes/timing.h"
 #include <glm/gtx/transform.hpp>
-
-double fps = 0;
-int n = 1;
-
-std::vector<double> pastFrames;
-double approxRollingAverage(double new_sample) {
-
-    pastFrames.push_back(new_sample);
-
-    float avg = 0;
-    int start = std::max((int) (pastFrames.size() - 101), 0);
-    for(size_t i = start; i < pastFrames.size(); i++)
-    {
-        avg += pastFrames[i];
-    }
-    avg = avg / (pastFrames.size() - start);
-
-    if (pastFrames.size() == 1000) {
-        std::vector<double> nFrames;
-
-        size_t start = pastFrames.size() - 101;
-        for(size_t i = start; i < pastFrames.size(); i++)
-        {
-            nFrames.push_back(pastFrames[i]);
-        }
-        pastFrames = nFrames;
-    }
-
-    return avg;
-}
-
 
 SceneviewScene::SceneviewScene()
 {
@@ -172,10 +142,12 @@ void SceneviewScene::loadShadowMapShader() {
 }
 
 
-int frames = 0;
 QTime m_timer;
 
 void SceneviewScene::render(SupportCanvas3D *context) {
+
+    static int frames = 0;
+    static int old_time = get_time();
 
     m_timer.start();
 
@@ -254,13 +226,17 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_fsq->draw();
     m_shadowMapShader->unbind();
 
-    fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+
+    //fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+
     frames++;
 
-    context->setFPS(fps);
-    if (frames % 100 == 0) {
+    if (((int) get_time()) != old_time) {
+        context->setFPS(frames);
         frames = 0;
+        old_time = (int) get_time();
     }
+
 }
 
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {
@@ -401,9 +377,12 @@ void SceneviewScene::create_random() {
     glm::mat4x4 offset = glm::translate(glm::vec3(fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7),
                                  fRandRange(0, 5),
                                  fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7)));
-    glm::mat4x4 rotation = glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(1, 0, 0))
+    /*glm::mat4x4 rotation = glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(1, 0, 0))
             * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 1, 0))
-            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 0, 1));
-    node.trans = offset * rotation;
+            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 0, 1));*/
+    glm::mat4x4 scale = glm::scale(glm::vec3(2, 2, 2));
+    if (randshape == "sphere") scale = glm::scale(glm::vec3(1.5, 1.5, 1.5));
+    node.trans = offset * scale;
+    node.disablePhysics = false;
     m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
 }

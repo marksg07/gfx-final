@@ -79,7 +79,7 @@ void Settings::loadSettingsOrDefaults() {
     
     // FEM
 
-    femTimeStep = 0.05f;
+    femTimeStep = 0.1f;
     femStepsPerFrame = 30;
     femIncompressibility = 10000;
     femRigidity = 10000;
