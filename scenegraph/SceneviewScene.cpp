@@ -12,6 +12,7 @@
 #include "CubeMap.h"
 using namespace CS123::GL;
 #include "shapes/tetmesh.h"
+#include "shapes/timing.h"
 
 
 double fps = 0;
@@ -172,10 +173,12 @@ void SceneviewScene::loadShadowMapShader() {
 }
 
 
-int frames = 0;
 QTime m_timer;
 
 void SceneviewScene::render(SupportCanvas3D *context) {
+
+    static int frames = 0;
+    static int old_time = get_time();
 
     m_timer.start();
 
@@ -254,13 +257,17 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_fsq->draw();
     m_shadowMapShader->unbind();
 
-    fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+
+    //fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
+
     frames++;
 
-    context->setFPS(fps);
-    if (frames % 100 == 0) {
+    if (((int) get_time()) != old_time) {
+        context->setFPS(frames);
         frames = 0;
+        old_time = (int) get_time();
     }
+
 }
 
 void SceneviewScene::setSceneUniforms(SupportCanvas3D *context) {
