@@ -386,8 +386,6 @@ void SceneviewScene::delete_all() {
     m_meshes.resize(1);
 }
 
-extern const float FLOOR_RADIUS;
-
 float fRandRange(float lo, float hi) {
     return (float(rand()) / RAND_MAX) * (hi - lo) + lo;
 }
