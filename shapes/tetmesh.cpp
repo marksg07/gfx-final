@@ -18,7 +18,7 @@
 
 //const int FLOOR_Y = -8;
 const int FLOOR_Y = -4;
-const int KILL_FLOOR_Y = -10;
+const int KILL_FLOOR_Y = -20;
 const int FLOOR_RADIUS = 9.0;
 
 /*

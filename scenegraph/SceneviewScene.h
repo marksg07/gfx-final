@@ -71,6 +71,8 @@ public:
 
     void renderGeometry(CS123::GL::Shader* shader);
     void onResize(int, int);
+    void delete_all();
+    void create_random();
 
 private:
 

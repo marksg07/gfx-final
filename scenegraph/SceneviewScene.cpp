@@ -381,3 +381,13 @@ void SceneviewScene::onResize(int width, int height) {
                                   TextureParameters::WRAP_METHOD::CLAMP_TO_EDGE);
 }
 
+void SceneviewScene::delete_all() {
+    // keep only the first element (cube floor)
+    m_meshes.resize(1);
+}
+
+void SceneviewScene::create_random() {
+    // TODO: Add random object (cube/sphere/1tet) to scene with a random offset
+    // Offset shouldn't have too high a y-value (and no lower than 0)
+    // Offset x/z values shouldn't be more than about FLOOR_RADIUS * 0.7 from 0 (+ or -)
+}

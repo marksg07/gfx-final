@@ -1134,7 +1134,7 @@
      <item row="1" column="0">
       <widget class="QPushButton" name="femStop">
        <property name="text">
-        <string>Stop simulation</string>
+        <string>Stop Simulation</string>
        </property>
       </widget>
      </item>
@@ -1252,6 +1252,13 @@
        </property>
        <property name="checked">
         <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QPushButton" name="delete_all">
+       <property name="text">
+        <string>Delete All</string>
        </property>
       </widget>
      </item>
@@ -1985,7 +1992,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>124</x>
-     <y>2598</y>
+     <y>2623</y>
     </hint>
     <hint type="destinationlabel">
      <x>750</x>
@@ -2001,7 +2008,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>106</x>
-     <y>2623</y>
+     <y>2648</y>
     </hint>
     <hint type="destinationlabel">
      <x>708</x>
@@ -2017,11 +2024,27 @@
    <hints>
     <hint type="sourcelabel">
      <x>78</x>
-     <y>2651</y>
+     <y>2676</y>
     </hint>
     <hint type="destinationlabel">
      <x>673</x>
      <y>2640</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>delete_all</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>on_delete_all_clicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>87</x>
+     <y>2406</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>766</x>
+     <y>2434</y>
     </hint>
    </hints>
   </connection>
@@ -2056,5 +2079,6 @@
   <slot>on_showFXAAEdges_stateChanged(int)</slot>
   <slot>on_shadowMapping_stateChanged(int)</slot>
   <slot>on_metalBalls_stateChanged(int)</slot>
+  <slot>on_delete_all_clicked()</slot>
  </slots>
 </ui>

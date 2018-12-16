@@ -121,6 +121,8 @@ public slots:
     void on_showFXAAEdges_stateChanged(int);
     void on_shadowMapping_stateChanged(int);
     void on_metalBalls_stateChanged(int arg1);
+    void on_delete_all_clicked();
+    void on_addObject_clicked();
 };
 
 #endif // MAINWINDOW_H
