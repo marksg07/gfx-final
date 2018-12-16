@@ -189,47 +189,19 @@ void main() {
 
             }
 
-            float k = 1;
-            float lambert = 1;
-            vec4 reflectionColor = vec4(0);
-            float f = 0;
-
-            if (doEnvMap) {
-                vec3 n = normalize(normal_cameraSpace.xyz);
-                vec3 l = normalize(vertexToLight.xyz);
-                vec3 cameraToVertex = normalize(position_cameraSpace.xyz); //remember we are in camera space!
-                vec4 inv = inv_view * vec4(reflect(cameraToVertex, n), 0);
-                reflectionColor = texture(envMap, inv.xyz);
-                vec3 u = vertexToLight.xyz;
-                vec3 v = -normalize(position_cameraSpace.xyz);
-                vec3 h = normalize((u + v).xyz);
-                float alpha = acos(dot(n, h));
-                float d = exp(-(pow(tan(alpha), 2)) / pow(rm, 2)) / (4 * pow(rm, 2) * pow(cos(alpha), 4));
-                float common_term = 2*dot(h, n)/dot(v, h);
-                float g = min(1, min(common_term * dot(v, n), common_term * dot(u, n)));
-                f = r0 + (1 - r0)*pow(1 - cos(dot(n, cameraToVertex)), 5);
-                k = max(0, (d * f * g) / dot(v, n));
-
-
-                // Add diffuse component
-                lambert = max(0.0, dot(n, l));
-            }
 
             // Add diffuse component
+
             float diffuseIntensity = max(0.0, dot(vertexToLight, normal_cameraSpace));
-            o_diff = lambert * visibility * max(vec3(0), lightColors[i] * diffuse_color * diffuseIntensity);
+            o_diff = visibility * max(vec3(0), lightColors[i] * diffuse_color * diffuseIntensity);
 
             // Add specular component
             vec4 lightReflection = normalize(-reflect(vertexToLight, normal_cameraSpace));
             vec4 eyeDirection = normalize(vec4(0,0,0,1) - position_cameraSpace);
             float specIntensity = pow(max(0.0, dot(eyeDirection, lightReflection)), shininess);
-            o_spec = k * visibility * max (vec3(0), lightColors[i] * specular_color * specIntensity);
+            o_spec = visibility * max (vec3(0), lightColors[i] * specular_color * specIntensity);
 
-            if (doEnvMap) {
-                color += mix(o_diff + o_spec, reflectionColor.xyz, f);
-            } else {
-                color += o_diff + o_spec;
-            }
+            color += o_diff + o_spec;
         }
         color += o_amb;
     } else {
@@ -241,6 +213,29 @@ void main() {
         color = o_amb + o_diff + o_spec;
     }
 
+    float k = 1;
+    float lambert = 1;
+    vec4 reflectionColor = vec4(0);
+    float f = 0;
+
+    if (doEnvMap) {
+        vec3 n = normalize(normal_cameraSpace.xyz);
+        vec3 cameraToVertex = normalize(position_cameraSpace.xyz); //remember we are in camera space!
+        vec4 inv = inv_view * vec4(reflect(cameraToVertex, n), 0);
+        reflectionColor = texture(envMap, inv.xyz);
+        vec3 u = vec3(0);
+        vec3 v = -normalize(position_cameraSpace.xyz);
+        vec3 h = normalize((u + v).xyz);
+        float alpha = acos(dot(n, h));
+        float d = exp(-(pow(tan(alpha), 2)) / pow(rm, 2)) / (4 * pow(rm, 2) * pow(cos(alpha), 4));
+        float common_term = 2*dot(h, n)/dot(v, h);
+        float g = min(1, min(common_term * dot(v, n), common_term * dot(u, n)));
+        f = r0 + (1 - r0)*pow(1 - cos(dot(n, cameraToVertex)), 5);
+        k = max(0, (d * f * g) / dot(v, n));
+
+    }
+
+    color = mix(color, reflectionColor.xyz, f);
     color = clamp(color, vec3(0), vec3(1));
 
     fragColor = vec4(color, 1);

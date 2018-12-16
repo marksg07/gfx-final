@@ -208,7 +208,7 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     m_phongShader->setTexture("envMap", GL_TEXTURE_CUBE_MAP, m_skybox->textureId());
     m_phongShader->setUniform("rm", 0.55f);
     m_phongShader->setUniform("r0", 0.70f);
-    m_phongShader->setUniform("doEnvMap", true);
+    m_phongShader->setUniform("doEnvMap", false);
     m_phongShader->setUniform("numLights", (int) m_lights.size());
 
     for(size_t i = 0; i < m_lights.size(); i++)
