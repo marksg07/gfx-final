@@ -24,7 +24,7 @@
 
 	<lightdata>
 		<id v="2"/>
-		<color r="1" g="1" b="1"/>
+		<color r="0.25" g="0.25" b="0.25"/>
 		<function v1="0" v2="0" v3="0"/>
 		<type v="point"/>
 		<position x="2.5" y="2.5" z="-2.5"/>
@@ -46,7 +46,7 @@
             </object>
         </transblock>
         <transblock>           
-            <scale x="2.0" y="2.0" z="2.0" />
+            <scale x="1.75" y="1.75" z="1.75" />
             <object type="primitive" name="mesh" meshfile="example-meshes/sphere.mesh">
                 <diffuse r="1" g="1" b="1"/>
             </object>

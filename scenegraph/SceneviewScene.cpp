@@ -257,9 +257,8 @@ void SceneviewScene::render(SupportCanvas3D *context) {
     fps = approxRollingAverage(1.0 / (float(m_timer.elapsed()) / 1000.0f));
     frames++;
 
+    context->setFPS(fps);
     if (frames % 100 == 0) {
-        printf("FPS: %f\n", fps);
-        context->setFPS(fps);
         frames = 0;
     }
 }

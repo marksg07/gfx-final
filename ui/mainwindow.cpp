@@ -237,7 +237,7 @@ void MainWindow::fileOpen() {
     activateCanvas3D();
     QString file = QFileDialog::getOpenFileName(this,
                                                 QString(),
-                                                "/course/cs123/data/",
+                                                "./mesh-tests/",
                                                 QString(),
                                                 nullptr,
                                                 QFileDialog::Option::DontUseNativeDialog);
