@@ -379,9 +379,12 @@ void SceneviewScene::create_random() {
     glm::mat4x4 offset = glm::translate(glm::vec3(fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7),
                                  fRandRange(0, 5),
                                  fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7)));
-    glm::mat4x4 rotation = glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(1, 0, 0))
+    /*glm::mat4x4 rotation = glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(1, 0, 0))
             * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 1, 0))
-            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 0, 1));
-    node.trans = offset * rotation;
+            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 0, 1));*/
+    glm::mat4x4 scale = glm::scale(glm::vec3(2, 2, 2));
+    if (randshape == "sphere") scale = glm::scale(glm::vec3(1.5, 1.5, 1.5));
+    node.trans = offset * scale;
+    node.disablePhysics = false;
     m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
 }
