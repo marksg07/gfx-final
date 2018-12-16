@@ -12,7 +12,7 @@
 #include "CubeMap.h"
 using namespace CS123::GL;
 #include "shapes/tetmesh.h"
-
+#include <glm/gtx/transform.hpp>
 
 double fps = 0;
 int n = 1;
@@ -386,8 +386,26 @@ void SceneviewScene::delete_all() {
     m_meshes.resize(1);
 }
 
+extern const float FLOOR_RADIUS;
+
+float fRandRange(float lo, float hi) {
+    return (float(rand()) / RAND_MAX) * (hi - lo) + lo;
+}
+
 void SceneviewScene::create_random() {
+    object_node_t node = m_meshes[0]->getONode();
     // TODO: Add random object (cube/sphere/1tet) to scene with a random offset
     // Offset shouldn't have too high a y-value (and no lower than 0)
     // Offset x/z values shouldn't be more than about FLOOR_RADIUS * 0.7 from 0 (+ or -)
+    std::string randshape = (std::string[]){"sphere", "cube", "single-tet"}[rand() % 3];
+    std::string fname = "example-meshes/" + randshape + ".mesh";
+    node.primitive.meshfile = fname;
+    glm::mat4x4 offset = glm::translate(glm::vec3(fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7),
+                                 fRandRange(0, 5),
+                                 fRandRange(-FLOOR_RADIUS*0.7, FLOOR_RADIUS*0.7)));
+    glm::mat4x4 rotation = glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(1, 0, 0))
+            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 1, 0))
+            * glm::rotate(fRandRange(0, 2*M_PI), glm::vec3(0, 0, 1));
+    node.trans = offset * rotation;
+    m_meshes.push_back(std::make_unique<TetMesh>(node, m_meshTemplateCache));
 }

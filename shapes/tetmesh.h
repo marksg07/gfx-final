@@ -7,6 +7,12 @@
 #include "ui/mainwindow.h"
 #include "gl/shaders/ShaderAttribLocations.h"
 
+
+const float FLOOR_Y = -4;
+const float KILL_FLOOR_Y = -20;
+const float FLOOR_RADIUS = 9.0;
+
+
 // combination hash function that combines hashes of each element
 template <typename...> struct hashh;
 
@@ -72,6 +78,7 @@ public:
     void draw();
     const object_node_t& getONode() { return m_onode; }
     std::vector<glm::vec3> getFaceTris();
+    void offsetPos(glm::vec3 offset);
 private:
     void calcFacesAndNorms();
     void calcNorms();
