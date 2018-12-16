@@ -325,7 +325,7 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
 
 // number of newtons to apply when penetrated 1  meter^2
 //#define PENALTY_ACCEL_K 50000.f
-#define PENALTY_ACCEL_K 10000.f
+#define PENALTY_ACCEL_K 30000.f
 
 void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
     for(long unsigned int i = 0;i < points.size(); i++) {
