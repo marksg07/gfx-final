@@ -318,24 +318,9 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
     };
 
 
-    long cur = 0;
-
-    //for(long unsigned int i = 0;i < m_tets.size(); i++) {
-    while(cur < m_tets.size())
-    {
-
-        long end = std::min((int) m_tets.size(), (int) cur + 100);
-        p.addJob([cur, end, calc_forces_i]() {
-            for(int i = cur; i < end; i++) {
-                calc_forces_i(i);
-            }
-        });
-
-        cur = end;
+    for(long unsigned int i = 0;i < m_tets.size(); i++) {
+        calc_forces_i(i);
     }
-    p.wait();
-    //}
-
 }
 
 // number of newtons to apply when penetrated 1  meter^2
@@ -501,7 +486,7 @@ void TetMesh::calcBaryTransforms() {
     }
 }
 
-#define MAT_DENSITY 1200
+#define MAT_DENSITY 600
 
 void TetMesh::calcPointMasses() {
     // calculate masses for each point based on tet volumes
