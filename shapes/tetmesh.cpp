@@ -168,88 +168,6 @@ int TetMesh::addNewPoint() {
     return m_points.size() - 1;
 }
 
-void TetMesh::computeFracture(const tet_t& tet, glm::mat3x3 stress) {
-    Eigen::Matrix3f rho = glmToEigen(stress);
-    Eigen::EigenSolver<Eigen::Matrix3f> solver(rho, true);
-    Eigen::Vector3cf eig_values = solver.eigenvalues();
-    int maxidx = -1;
-    float maxval = -1;
-    for(long unsigned int i = 0;i < 3; i++) {
-        float val = std::abs(eig_values(i));
-        if(val > maxval) {
-            maxval = val;
-            maxidx = i;
-        }
-    }
-    Eigen::Vector3cf eigvector = solver.eigenvectors().col(maxidx);
-    glm::vec3 splitNormal(std::abs(eigvector(0)), std::abs(eigvector(1)), std::abs(eigvector(2)));
-    splitNormal = glm::normalize(splitNormal);
-    if(maxval > -1) {
-        printf("Cracking!\n");
-        int tip;
-        std::vector<int> crackTips;
-        crackTips.reserve(4);
-        if(m_isCrackTip[tet.p1])
-            crackTips.push_back(tet.p1);
-        if(m_isCrackTip[tet.p2])
-            crackTips.push_back(tet.p2);
-        if(m_isCrackTip[tet.p3])
-            crackTips.push_back(tet.p3);
-        if(m_isCrackTip[tet.p4])
-            crackTips.push_back(tet.p4);
-
-        if(crackTips.size() == 0) {
-            tip = (int[]){tet.p1, tet.p2, tet.p3, tet.p4}[rand() % 4];
-        }
-        else {
-            tip = crackTips[rand() % crackTips.size()];
-        }
-        int pminus = addNewPoint();
-        m_points[pminus] = m_points[tip];
-        m_vels[pminus] = m_vels[tip];
-        m_pointMasses[pminus] = m_pointMasses[tip] / 2;
-        m_pointMasses[tip] = m_pointMasses[pminus];
-        const std::vector<int> *tetsTouching = &m_pToTMap[tip];
-        std::vector<int> plusSide, minusSide;
-        for(long unsigned int i = 0;i < tetsTouching->size(); i++) {
-            int tetidx = (*tetsTouching)[i];
-            tet_t tet = m_tets[tetidx];
-            if(glm::dot(splitNormal, getCenter(m_points, tet) - m_points[tip]) < 0) {
-                // behind plane, swap to other point
-                /*if(tet.p1 == tip)
-                    m_tets[tetidx].p1 = pminus;
-                if(tet.p2 == tip)
-                    m_tets[tetidx].p2 = pminus;
-                if(tet.p3 == tip)
-                    m_tets[tetidx].p3 = pminus;
-                if(tet.p4 == tip)
-                    m_tets[tetidx].p4 = pminus;
-                tetsTouching->erase(tetsTouching->begin() + i);
-                i--;
-                m_pToTMap[pminus].push_back(tetidx);*/
-                minusSide.push_back(tetidx);
-            }
-            else {
-                plusSide.push_back(tetidx);
-            }
-        }
-        for(long unsigned int i = 0;i < plusSide.size(); i++) {
-            tet_t ti = m_tets[i];
-            for(long unsigned int j = 0; j < minusSide.size(); j++) {
-                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p3) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p3))
-                    1;
-                if((tip == ti.p1 || tip == ti.p2 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p2, ti.p4))
-                    1;
-                if((tip == ti.p1 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p1, ti.p3, ti.p4))
-                    1;
-                if((tip == ti.p2 || tip == ti.p3 || tip == ti.p4) && hasFace(m_tets[j], ti.p2, ti.p3, ti.p4))
-                    1;
-            }
-        }
-
-    }
-}
-
 void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels) {
     // total force = gravity/other global forces + stress per element
     // stress = elastic stress + viscous stress
@@ -309,17 +227,42 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
         glm::vec3 p3force = stress_t_ws * -glm::cross(p4 - p1, p2 - p1);
         glm::vec3 p4force = stress_t_ws * -glm::cross(p2 - p1, p3 - p1);
 
-        //forcesMutex.lock();
+        forcesMutex.lock();
         forcePerNode[tet.p1] += p1force;
         forcePerNode[tet.p2] += p2force;
         forcePerNode[tet.p3] += p3force;
         forcePerNode[tet.p4] += p4force;
-        //forcesMutex.unlock();
+        forcesMutex.unlock();
     };
 
+    if(true) {
+        for(long unsigned int i = 0;i < m_tets.size(); i++) {
+            calc_forces_i(i);
+        }
+    }
+    else {
+        int nthreads = 1;
+        std::thread threads[nthreads];
+        float ninc = m_tets.size() / nthreads;
+        float tlast = 0;
 
-    for(long unsigned int i = 0;i < m_tets.size(); i++) {
-        calc_forces_i(i);
+        for(int i = 0; i < nthreads - 1; i++) {
+            float tlcopy = tlast;
+            threads[i] = std::thread([calc_forces_i, tlcopy, ninc]{
+                for(int j = std::round(tlcopy); j < std::round(tlcopy + ninc); j++) {
+                    calc_forces_i(j);
+                }
+            });
+            tlast = tlast + ninc;
+        }
+        threads[nthreads - 1] = std::thread([&]{
+            for(int j = std::round(tlast); j < m_tets.size(); j++) {
+                calc_forces_i(j);
+            }
+        });
+        for(int i = 0; i < nthreads; i++) {
+            threads[i].join();
+        }
     }
 }
 
