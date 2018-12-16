@@ -19,6 +19,8 @@
 //const int FLOOR_Y = -8;
 const int FLOOR_Y = -4;
 const int KILL_FLOOR_Y = -10;
+const int FLOOR_RADIUS = 9.0;
+
 /*
  * Incompressibility: 1000
  * Rigidity: 1000
@@ -331,7 +333,7 @@ void TetMesh::computeStressForces(std::vector<glm::vec3>& forcePerNode, const st
 
 void TetMesh::computeCollisionForces(std::vector<glm::vec3> &forcePerNode, const std::vector<glm::vec3>& points, const std::vector<glm::vec3>& vels, float floorY) {
     for(long unsigned int i = 0;i < points.size(); i++) {
-        if(points[i].y < floorY) {
+        if(points[i].y < floorY && std::abs(points[i].x) < FLOOR_RADIUS && std::abs(points[i].z) < FLOOR_RADIUS) {
             glm::vec3 penaltyForce = m_pointMasses[i] * glm::vec3(0, PENALTY_ACCEL_K * (floorY - points[i].y), 0);
             forcePerNode[i] += penaltyForce;
         }

@@ -460,3 +460,8 @@ void MainWindow::on_shadowMapping_stateChanged(int val)
 {
     m_canvas3D->on_shadowMapping_changed(val);
 }
+
+void MainWindow::on_metalBalls_stateChanged(int arg1)
+{
+    m_canvas3D->on_metalBalls_changed(arg1);
+}
