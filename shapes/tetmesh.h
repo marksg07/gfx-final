@@ -8,7 +8,7 @@
 #include "gl/shaders/ShaderAttribLocations.h"
 
 
-const float FLOOR_Y = -4;
+const float FLOOR_Y = -3.75;
 const float KILL_FLOOR_Y = -20;
 const float FLOOR_RADIUS = 9.0;
 

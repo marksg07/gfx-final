@@ -81,10 +81,10 @@ void Settings::loadSettingsOrDefaults() {
 
     femTimeStep = 0.1f;
     femStepsPerFrame = 30;
-    femIncompressibility = 10000;
-    femRigidity = 10000;
-    femBulkViscosity = 1000;
-    femShearViscosity = 1000    ;
+    femIncompressibility = 2000;
+    femRigidity = 2000;
+    femBulkViscosity = 2000;
+    femShearViscosity = 2000    ;
     
     useShadowMapping = 1;
     metalBalls = 1;
