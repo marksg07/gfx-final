@@ -75,9 +75,10 @@ public slots:
     void updateCameraRotationN();
     void updateCameraClip();
     void updateScreenConcurrent() {
-        QtConcurrent::run([&]() {
+        /*QtConcurrent::run([&]() {
             update();
-        });
+        });*/
+        update();
     }
     void on_femSimulate_clicked();
     void on_femStop_clicked();
