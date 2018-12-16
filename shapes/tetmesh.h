@@ -5,6 +5,7 @@
 #include "scenegraph/Scene.h"
 #include "openglshape.h"
 #include "ui/mainwindow.h"
+#include "ThreadPool.h"
 #include "gl/shaders/ShaderAttribLocations.h"
 
 // combination hash function that combines hashes of each element
@@ -92,6 +93,8 @@ private:
     std::vector<std::vector<int>> m_pToTMap;
     std::unordered_map<glm::ivec3, bool, ivec3_hash> m_faces;
     std::vector<glm::mat3x3> m_baryTransforms;
+
+    ThreadPool p;
     object_node_t m_onode;
     mat_t m_material;
     // using lumped mass model, so rather than store an entire NxN matrix we will just store a vector
